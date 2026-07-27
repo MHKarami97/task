@@ -87,16 +87,18 @@ export class SheetController {
         </div>
 
         <div class="field-row field">
-          <div>
+          <div class="date-field">
             <label class="field__label">${ICON_DATE}تاریخ (شمسی)</label>
-            <input class="field__input" id="f-date" value="${dueJalali ? dueJalali.format() : ""}" placeholder="۱۴۰۵/۰۵/۰۵" inputmode="numeric" />
+            <button type="button" class="field__input date-field__trigger" id="f-date-trigger">
+              <span id="f-date-display">${dueJalali ? dueJalali.formatLong() : "انتخاب تاریخ"}</span>
+            </button>
+            <input type="hidden" id="f-date" value="${dueJalali ? dueJalali.format() : ""}" />
           </div>
           <div>
             <label class="field__label">${ICON_TIME}ساعت</label>
             <input class="field__input" type="time" id="f-time" value="${existing?.dueTime || ""}" />
           </div>
         </div>
-        <p class="field__hint">فرمت تاریخ: سال/ماه/روز — مثلاً ۱۴۰۵/۰۵/۰۵</p>
 
         <div class="field__divider"></div>
 
@@ -151,12 +153,122 @@ export class SheetController {
     this._bindSegmented("f-priority-group", "f-priority", "priority");
     this._bindSegmented("f-repeat-group", "f-repeat", "repeat");
     this._bindSegmented("f-reminder-group", "f-reminder", "reminder");
+    this._pickerViewDate = dueJalali || JalaliDate.today();
+    this._pickerSelectedDate = dueJalali;
+    this._bindDatePicker();
 
     this.overlay.querySelector("#sheet-close").addEventListener("click", () => this.close());
     this.overlay.querySelector("#f-save").addEventListener("click", () => this._saveTask(existing));
     this.overlay.querySelector("#f-delete")?.addEventListener("click", () => {
       taskController.deleteTask(existing.id);
       this.close();
+    });
+  }
+
+  _bindDatePicker() {
+    const trigger = this.overlay.querySelector("#f-date-trigger");
+    trigger?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._toggleDatePicker();
+    });
+  }
+
+  _toggleDatePicker() {
+    const existingPopover = this.overlay.querySelector("#date-picker-popover");
+    if (existingPopover) {
+      existingPopover.remove();
+      return;
+    }
+    const wrapper = this.overlay.querySelector(".date-field");
+    const popover = document.createElement("div");
+    popover.id = "date-picker-popover";
+    popover.className = "date-picker-popover";
+    popover.innerHTML = this._renderDatePickerBody();
+    wrapper.appendChild(popover);
+    this._bindDatePickerBody(popover);
+
+    const closeOnOutsideClick = (e) => {
+      if (!popover.contains(e.target) && e.target.id !== "f-date-trigger") {
+        popover.remove();
+        document.removeEventListener("click", closeOnOutsideClick);
+      }
+    };
+    setTimeout(() => document.addEventListener("click", closeOnOutsideClick), 0);
+  }
+
+  _renderDatePickerBody() {
+    const { jy, jm } = this._pickerViewDate;
+    const monthLength = JalaliDate.monthLength(jy, jm);
+    const firstDay = new JalaliDate(jy, jm, 1);
+    const leadingBlanks = firstDay.weekdayIndex;
+    const days = [];
+    for (let i = 0; i < leadingBlanks; i += 1) days.push(null);
+    for (let d = 1; d <= monthLength; d += 1) days.push(new JalaliDate(jy, jm, d));
+    while (days.length % 7 !== 0) days.push(null);
+    const weekdayShort = JalaliDate.weekdayShort();
+
+    return `
+      <div class="date-picker-header">
+        <button type="button" class="btn--icon" id="dp-prev">‹</button>
+        <span>${this._pickerViewDate.monthName} ${jy}</span>
+        <button type="button" class="btn--icon" id="dp-next">›</button>
+      </div>
+      <div class="date-picker-grid">
+        ${weekdayShort.map((w) => `<div class="date-picker-grid__weekday">${w}</div>`).join("")}
+        ${days
+          .map((d) => {
+            if (!d) return `<div class="date-picker-day is-empty"></div>`;
+            const isSelected = this._pickerSelectedDate && d.isSameDay(this._pickerSelectedDate);
+            const isToday = d.isToday();
+            return `<div class="date-picker-day ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}" data-jy="${d.jy}" data-jm="${d.jm}" data-jd="${d.jd}">${d.jd}</div>`;
+          })
+          .join("")}
+      </div>
+      <div class="date-picker-footer">
+        <button type="button" class="btn btn--secondary" id="dp-clear">حذف تاریخ</button>
+        <button type="button" class="btn btn--primary" id="dp-today">امروز</button>
+      </div>`;
+  }
+
+  _bindDatePickerBody(popover) {
+    popover.querySelector("#dp-prev").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const { jy, jm } = this._pickerViewDate;
+      this._pickerViewDate = jm === 1 ? new JalaliDate(jy - 1, 12, 1) : new JalaliDate(jy, jm - 1, 1);
+      popover.innerHTML = this._renderDatePickerBody();
+      this._bindDatePickerBody(popover);
+    });
+    popover.querySelector("#dp-next").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const { jy, jm } = this._pickerViewDate;
+      this._pickerViewDate = jm === 12 ? new JalaliDate(jy + 1, 1, 1) : new JalaliDate(jy, jm + 1, 1);
+      popover.innerHTML = this._renderDatePickerBody();
+      this._bindDatePickerBody(popover);
+    });
+    popover.querySelectorAll(".date-picker-day[data-jy]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const selected = new JalaliDate(Number(el.dataset.jy), Number(el.dataset.jm), Number(el.dataset.jd));
+        this._pickerSelectedDate = selected;
+        this.overlay.querySelector("#f-date").value = selected.format();
+        this.overlay.querySelector("#f-date-display").textContent = selected.formatLong();
+        popover.remove();
+      });
+    });
+    popover.querySelector("#dp-today").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const today = JalaliDate.today();
+      this._pickerSelectedDate = today;
+      this.overlay.querySelector("#f-date").value = today.format();
+      this.overlay.querySelector("#f-date-display").textContent = today.formatLong();
+      popover.remove();
+    });
+    popover.querySelector("#dp-clear").addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._pickerSelectedDate = null;
+      this.overlay.querySelector("#f-date").value = "";
+      this.overlay.querySelector("#f-date-display").textContent = "انتخاب تاریخ";
+      popover.remove();
     });
   }
 
@@ -217,7 +329,7 @@ export class SheetController {
         </div>
         <div class="field">
           <label class="field__label">${ICON_COLOR}رنگ</label>
-          <input class="field__input" type="color" id="list-color" value="#92f7b6" style="height:48px;padding:4px;cursor:pointer;" />
+          <input class="field__input" type="color" id="list-color" value="#1ed760" style="height:48px;padding:4px;cursor:pointer;" />
         </div>
         <button class="btn btn--primary btn--block" id="list-save">افزودن لیست</button>
       </div>`;

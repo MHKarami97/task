@@ -230,21 +230,63 @@
   gap: var(--space-2);
   background: var(--surface-1);
   border-radius: var(--radius-full);
-  padding: 4px 4px 4px 4px;
-  border: 1.5px solid transparent;
-  box-shadow: var(--shadow-input-inset);
-  margin-bottom: var(--space-4);
-  transition: border-color var(--transition-fast);
+  padding: 6px 8px 6px 6px;
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-medium);
+  margin-bottom: var(--space-5);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
 }
-.quick-add:focus-within { border-color: var(--color-accent); }
+.quick-add:hover { border-color: var(--dark-border-light); }
+.quick-add:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(30, 215, 96, 0.16), var(--shadow-medium);
+}
+
+.quick-add__icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+.quick-add__icon svg { width: 18px; height: 18px; }
+.quick-add:focus-within .quick-add__icon { color: var(--color-accent); background: rgba(30, 215, 96, 0.12); }
+
 .quick-add input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
-  padding: 10px 16px;
+  padding: 10px 4px;
   color: var(--text-base);
+  font-size: 0.92rem;
 }
+.quick-add input::placeholder { color: var(--text-secondary); opacity: 0.75; }
 .quick-add input:focus { outline: none; }
+
+.quick-add__submit {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+.quick-add__submit svg { width: 18px; height: 18px; }
+.quick-add:focus-within .quick-add__submit,
+.quick-add input:not(:placeholder-shown) ~ .quick-add__submit {
+  background: var(--color-accent);
+  color: #000;
+}
+.quick-add__submit:active { transform: scale(0.92); }
 
 /* ---------- Modal / Bottom sheet ---------- */
 .overlay {
@@ -369,58 +411,86 @@
   font-size: 0.72rem; font-weight: 600; color: var(--text-secondary);
 }
 
-.quick-add {
+
+/* ---------- Date field trigger + popover picker (used in task form) ---------- */
+.date-field { position: relative; }
+
+.date-field__trigger {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  background: var(--surface-1);
-  border-radius: var(--radius-full);
-  padding: 6px 8px 6px 6px;
-  border: 1.5px solid var(--border);
-  box-shadow: var(--shadow-medium);
-  margin-bottom: var(--space-5);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-}
-.quick-add:hover { border-color: var(--dark-border-light); }
-.quick-add:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(30, 215, 96, 0.16), var(--shadow-medium);
-}
-
-.quick-add__icon {
-  flex-shrink: 0;
-  width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast), background var(--transition-fast);
-}
-.quick-add__icon svg { width: 18px; height: 18px; }
-.quick-add:focus-within .quick-add__icon { color: var(--color-accent); background: rgba(30, 215, 96, 0.12); }
-
-.quick-add input {
-  flex: 1; min-width: 0;
-  background: transparent; border: none;
-  padding: 10px 4px;
+  text-align: right;
+  cursor: pointer;
   color: var(--text-base);
-  font-size: 0.92rem;
 }
-.quick-add input::placeholder { color: var(--text-secondary); opacity: 0.75; }
-.quick-add input:focus { outline: none; }
+.date-field__trigger:hover { border-color: var(--dark-border); }
+.date-field__trigger:focus,
+.date-field__trigger:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(30, 215, 96, 0.16);
+}
 
-.quick-add__submit {
-  flex-shrink: 0;
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--surface-2);
+.date-picker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 60;
+  width: 250px;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-heavy);
+  border: 1px solid var(--border);
+  animation: dpFadeIn var(--transition-fast);
+}
+
+@keyframes dpFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.date-picker-grid__weekday {
+  font-size: 0.68rem;
   color: var(--text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  font-weight: 700;
+  padding: 4px 0;
 }
-.quick-add__submit svg { width: 18px; height: 18px; }
-.quick-add:focus-within .quick-add__submit,
-.quick-add input:not(:placeholder-shown) ~ .quick-add__submit {
-  background: var(--color-accent);
-  color: #000;
+
+.date-picker-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
 }
-.quick-add__submit:active { transform: scale(0.92); }
+.date-picker-day:not(.is-empty):hover { background: var(--surface-2); }
+.date-picker-day.today { border: 1px solid var(--color-accent); }
+.date-picker-day.selected { background: var(--color-accent); color: #000; font-weight: 700; }
+.date-picker-day.is-empty { cursor: default; }
+
+.date-picker-footer {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.date-picker-footer .btn { flex: 1; padding: 8px 12px; font-size: 0.78rem; }

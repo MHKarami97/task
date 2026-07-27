@@ -37,10 +37,8 @@ export class TasksView {
         ? taskController.getAllTasks()
         : taskController.getTasksForList(this.currentListId);
 
-    if (this.currentFilter === "active")
-      tasks = tasks.filter((t) => !t.completed);
-    if (this.currentFilter === "completed")
-      tasks = tasks.filter((t) => t.completed);
+    if (this.currentFilter === "active") tasks = tasks.filter((t) => !t.completed);
+    if (this.currentFilter === "completed") tasks = tasks.filter((t) => t.completed);
     return tasks;
   }
 
@@ -57,7 +55,7 @@ export class TasksView {
             (c) => `
           <button class="chip ${c.id === this.currentListId ? "active" : ""}" data-list-id="${c.id}">
             <span class="chip__dot" style="background:${c.color}"></span>${c.name}
-          </button>`,
+          </button>`
           )
           .join("")}
         <button class="chip" id="add-list-chip">+ لیست جدید</button>
@@ -75,7 +73,7 @@ export class TasksView {
         ${filters
           .map(
             (f) =>
-              `<button class="chip ${f.id === this.currentFilter ? "active" : ""}" data-filter-id="${f.id}">${f.name}</button>`,
+              `<button class="chip ${f.id === this.currentFilter ? "active" : ""}" data-filter-id="${f.id}">${f.name}</button>`
           )
           .join("")}
       </div>`;
@@ -117,14 +115,14 @@ export class TasksView {
 
     this.root.innerHTML = `
       <div class="quick-add">
-  <span class="quick-add__icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-  </span>
-  <input type="text" id="quick-add-input" placeholder="افزودن کار جدید..." />
-  <button class="quick-add__submit" id="quick-add-btn" aria-label="افزودن کار">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-  </button>
-</div>
+        <span class="quick-add__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+        <input type="text" id="quick-add-input" placeholder="افزودن کار جدید..." />
+        <button class="quick-add__submit" id="quick-add-btn" aria-label="افزودن کار">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        </button>
+      </div>
       ${this._renderChips()}
       ${this._renderFilterRow()}
       <div id="task-groups">
@@ -137,7 +135,7 @@ export class TasksView {
               <div class="task-section">
                 <div class="task-section__header"><span class="task-section__title">${label}</span></div>
                 <ul>${group.map((t) => this._taskItemHTML(t)).join("")}</ul>
-              </div>`,
+              </div>`
                 )
                 .join("")
         }
@@ -147,25 +145,14 @@ export class TasksView {
   }
 
   _groupByDate(tasks) {
-    const groups = {
-      "بدون تاریخ": [],
-      "دیروز و قبل‌تر (عقب‌افتاده)": [],
-      امروز: [],
-      فردا: [],
-      "این هفته": [],
-      بعداً: [],
-    };
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(today.getDate() + 7);
+    const groups = { "بدون تاریخ": [], "دیروز و قبل‌تر (عقب‌افتاده)": [], امروز: [], فردا: [], "این هفته": [], بعداً: [] };
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 7);
 
     tasks.forEach((t) => {
       if (!t.dueDateISO) return groups["بدون تاریخ"].push(t);
-      const due = new Date(t.dueDateISO);
-      due.setHours(0, 0, 0, 0);
+      const due = new Date(t.dueDateISO); due.setHours(0, 0, 0, 0);
       if (due < today) groups["دیروز و قبل‌تر (عقب‌افتاده)"].push(t);
       else if (due.getTime() === today.getTime()) groups["امروز"].push(t);
       else if (due.getTime() === tomorrow.getTime()) groups["فردا"].push(t);
@@ -173,9 +160,7 @@ export class TasksView {
       else groups["بعداً"].push(t);
     });
 
-    return Object.fromEntries(
-      Object.entries(groups).filter(([, v]) => v.length > 0),
-    );
+    return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length > 0));
   }
 
   _bindEvents() {
@@ -201,38 +186,28 @@ export class TasksView {
       }
     });
 
-    this.root
-      .querySelectorAll("[data-list-id]")
-      .forEach((el) =>
-        el.addEventListener("click", () => this.setList(el.dataset.listId)),
-      );
+    this.root.querySelectorAll("[data-list-id]").forEach((el) =>
+      el.addEventListener("click", () => this.setList(el.dataset.listId))
+    );
     this.root.querySelectorAll("[data-filter-id]").forEach((el) =>
       el.addEventListener("click", () => {
         this.currentFilter = el.dataset.filterId;
         this.render();
-      }),
+      })
     );
-    this.root
-      .querySelector("#add-list-chip")
-      ?.addEventListener("click", () => this.sheet.openListForm());
+    this.root.querySelector("#add-list-chip")?.addEventListener("click", () => this.sheet.openListForm());
 
     this.root.querySelectorAll(".task-item").forEach((item) => {
       const id = item.dataset.taskId;
-      item
-        .querySelector('[data-action="toggle"]')
-        .addEventListener("click", (e) => {
-          e.stopPropagation();
-          taskController.toggleComplete(id);
-        });
-      item
-        .querySelector('[data-action="star"]')
-        .addEventListener("click", (e) => {
-          e.stopPropagation();
-          taskController.toggleStar(id);
-        });
-      item
-        .querySelector('[data-action="open"]')
-        .addEventListener("click", () => this.sheet.openTaskForm(id));
+      item.querySelector('[data-action="toggle"]').addEventListener("click", (e) => {
+        e.stopPropagation();
+        taskController.toggleComplete(id);
+      });
+      item.querySelector('[data-action="star"]').addEventListener("click", (e) => {
+        e.stopPropagation();
+        taskController.toggleStar(id);
+      });
+      item.querySelector('[data-action="open"]').addEventListener("click", () => this.sheet.openTaskForm(id));
     });
   }
 }

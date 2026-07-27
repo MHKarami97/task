@@ -1,0 +1,120 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-medium);
+}
+
+.topbar__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.main-content {
+  flex: 1;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-6));
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.view {
+  display: none;
+  animation: fadeIn var(--transition-base);
+}
+.view.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom navigation — mobile-first, always visible */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 30;
+  height: var(--bottom-nav-height);
+  display: flex;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-heavy);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.bottom-nav__item svg { width: 22px; height: 22px; }
+
+.bottom-nav__item.active {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.bottom-nav__item.fab {
+  position: relative;
+  top: -18px;
+}
+
+.bottom-nav__fab-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-circle);
+  background: var(--color-accent);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-heavy);
+}
+
+/* Section grouping in Tasks view */
+.task-section {
+  margin-bottom: var(--space-6);
+}
+
+.task-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+.task-section__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}

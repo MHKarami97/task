@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Design Tokens — inspired by Spotify's dark-immersive design language
+   Adapted for RTL Persian task-management PWA
+   ========================================================================== */
+:root {
+  /* Brand */
+  --color-accent: #1ed760;
+  --color-accent-border: #1db954;
+
+  /* Dark theme surfaces */
+  --dark-bg: #121212;
+  --dark-surface-1: #181818;
+  --dark-surface-2: #1f1f1f;
+  --dark-card: #252525;
+  --dark-card-alt: #272727;
+  --dark-border: #4d4d4d;
+  --dark-border-light: #7c7c7c;
+
+  /* Dark theme text */
+  --dark-text-base: #ffffff;
+  --dark-text-secondary: #b3b3b3;
+  --dark-text-tertiary: #cbcbcb;
+
+  /* Light theme surfaces */
+  --light-bg: #fafafa;
+  --light-surface-1: #ffffff;
+  --light-surface-2: #f2f2f2;
+  --light-card: #ffffff;
+  --light-border: #e0e0e0;
+
+  /* Light theme text */
+  --light-text-base: #121212;
+  --light-text-secondary: #5e5e5e;
+
+  /* Semantic */
+  --color-negative: #f3727f;
+  --color-warning: #ffa42b;
+  --color-announcement: #539df5;
+  --color-success: var(--color-accent);
+
+  /* Priority colors */
+  --priority-high: #f3727f;
+  --priority-medium: #ffa42b;
+  --priority-low: #539df5;
+
+  /* Elevation shadows */
+  --shadow-medium: rgba(0, 0, 0, 0.3) 0px 8px 8px;
+  --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
+  --shadow-input-inset: rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+
+  /* Radius scale */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 16px;
+  --radius-pill: 500px;
+  --radius-full: 9999px;
+  --radius-circle: 50%;
+
+  /* Spacing scale (base unit 8px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Typography */
+  --font-family-base: "Vazirmatn", "SpotifyMixUI", -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-family-title: "Vazirmatn", "SpotifyMixUITitle", -apple-system, "Segoe UI", Tahoma, sans-serif;
+
+  /* Layout */
+  --bottom-nav-height: 64px;
+  --topbar-height: 56px;
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+
+  /* Active theme bindings — default: dark */
+  --bg: var(--dark-bg);
+  --surface-1: var(--dark-surface-1);
+  --surface-2: var(--dark-surface-2);
+  --card: var(--dark-card);
+  --border: var(--dark-border);
+  --text-base: var(--dark-text-base);
+  --text-secondary: var(--dark-text-secondary);
+}
+
+[data-theme="light"] {
+  --bg: var(--light-bg);
+  --surface-1: var(--light-surface-1);
+  --surface-2: var(--light-surface-2);
+  --card: var(--light-card);
+  --border: var(--light-border);
+  --text-base: var(--light-text-base);
+  --text-secondary: var(--light-text-secondary);
+  --shadow-medium: rgba(0, 0, 0, 0.08) 0px 4px 12px;
+  --shadow-heavy: rgba(0, 0, 0, 0.15) 0px 8px 24px;
+}

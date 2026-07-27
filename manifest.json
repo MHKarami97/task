@@ -66,6 +66,20 @@
       "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "تسک"
+    },
+    {
+      "src": "/assets/screenshots/02.jpg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "تسک"
+    },
+    {
+      "src": "/assets/screenshots/03.jpg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "تسک"
     }
   ],
   "shortcuts": [

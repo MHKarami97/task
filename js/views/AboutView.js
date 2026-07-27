@@ -10,7 +10,7 @@ export class AboutView {
     const stats = taskController.getStats();
     this.root.innerHTML = `
       <div class="about-hero">
-        <div class="about-avatar">MK</div>
+        <div class="about-avatar">MHK</div>
         <h2>محمدحسین کرمی</h2>
         <p class="text-secondary">توسعه‌دهنده نرم‌افزار</p>
         <div class="about-links">

@@ -58,6 +58,7 @@ class App {
     });
 
     document.getElementById("fab-add")?.addEventListener("click", () => this.sheet.openTaskForm());
+    document.getElementById("fab-add-list")?.addEventListener("click", () => this.sheet.openListForm());
 
     const themeToggle = document.getElementById("theme-toggle");
     themeToggle?.addEventListener("click", () => themeManager.toggle());

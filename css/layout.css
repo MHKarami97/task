@@ -30,11 +30,16 @@
 
 .main-content {
   flex: 1;
+  display: flex;
+  justify-content: center;
   padding: var(--space-4);
   padding-bottom: calc(var(--bottom-nav-height) + var(--space-6));
-  max-width: 720px;
+  min-width: 0;
+}
+
+.main-content > .view {
   width: 100%;
-  margin: 0 auto;
+  max-width: 720px;
 }
 
 .view {

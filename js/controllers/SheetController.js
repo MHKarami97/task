@@ -3,6 +3,16 @@ import PersianDate from "../utils/PersianDate.js";
 
 const { JalaliDate } = PersianDate;
 
+const ICON_TITLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>';
+const ICON_NOTES = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>';
+const ICON_LIST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="5" cy="18" r="1.5"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
+const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>';
+const ICON_TIME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+const ICON_PRIORITY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4M4 4h13l-3 4 3 4H4"/></svg>';
+const ICON_REPEAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 3 1 5 2 6H4c1-1 2-3 2-6z"/><path d="M9 20a3 3 0 0 0 6 0"/></svg>';
+const ICON_COLOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+
 /**
  * SheetController — manages the bottom-sheet modal used for both
  * creating/editing tasks and creating new lists. Kept separate from views
@@ -22,10 +32,32 @@ export class SheetController {
   }
 
   openTaskForm(taskId = null, defaultListId = "default") {
-    const task = taskId ? taskController.getTasksForList("all")?.find : null;
     const existing = taskId ? taskController.taskRepository.getById(taskId) : null;
     const lists = taskController.getAllLists();
-    const dueJalali = existing?.dueDateISO ? JalaliDate.fromISO(existing.dueDateISO) : JalaliDate.today();
+    const dueJalali = existing?.dueDateISO ? JalaliDate.fromISO(existing.dueDateISO) : null;
+
+    const priorityOptions = [
+      { key: "high", label: "بالا" },
+      { key: "medium", label: "متوسط" },
+      { key: "low", label: "پایین" },
+    ];
+    const repeatOptions = [
+      { key: "none", label: "بدون تکرار" },
+      { key: "daily", label: "روزانه" },
+      { key: "weekly", label: "هفتگی" },
+      { key: "monthly", label: "ماهانه" },
+    ];
+    const reminderOptions = [
+      { key: "", label: "بدون یادآوری" },
+      { key: "10", label: "۱۰ دقیقه قبل" },
+      { key: "30", label: "۳۰ دقیقه قبل" },
+      { key: "60", label: "۱ ساعت قبل" },
+      { key: "1440", label: "۱ روز قبل" },
+    ];
+
+    const currentPriority = existing?.priority || "medium";
+    const currentRepeat = existing?.repeat || "none";
+    const currentReminder = existing?.reminderMinutesBefore != null ? String(existing.reminderMinutesBefore) : "";
 
     this.overlay.innerHTML = `
       <div class="bottom-sheet">
@@ -34,65 +66,110 @@ export class SheetController {
           <h3>${existing ? "ویرایش کار" : "کار جدید"}</h3>
           <button class="btn--icon" id="sheet-close">✕</button>
         </div>
+
         <div class="field">
-          <label class="field__label">عنوان</label>
-          <input class="field__input" id="f-title" value="${existing ? this._esc(existing.title) : ""}" placeholder="مثلاً: خرید نان" />
+          <label class="field__label">${ICON_TITLE}عنوان</label>
+          <input class="field__input" id="f-title" value="${existing ? this._esc(existing.title) : ""}" placeholder="مثلاً: خرید نان" autofocus />
         </div>
+
         <div class="field">
-          <label class="field__label">یادداشت</label>
-          <textarea class="field__textarea" id="f-notes">${existing ? this._esc(existing.notes) : ""}</textarea>
+          <label class="field__label">${ICON_NOTES}یادداشت</label>
+          <textarea class="field__textarea" id="f-notes" placeholder="جزئیات بیشتر (اختیاری)">${existing ? this._esc(existing.notes) : ""}</textarea>
         </div>
+
         <div class="field">
-          <label class="field__label">لیست</label>
-          <select class="field__select" id="f-list">
-            ${lists.map((l) => `<option value="${l.id}" ${l.id === (existing?.listId || defaultListId) ? "selected" : ""}>${l.name}</option>`).join("")}
-          </select>
+          <label class="field__label">${ICON_LIST}لیست</label>
+          <div class="select-wrapper">
+            <select class="field__select" id="f-list">
+              ${lists.map((l) => `<option value="${l.id}" ${l.id === (existing?.listId || defaultListId) ? "selected" : ""}>${l.name}</option>`).join("")}
+            </select>
+          </div>
         </div>
+
+        <div class="field-row field">
+          <div>
+            <label class="field__label">${ICON_DATE}تاریخ (شمسی)</label>
+            <input class="field__input" id="f-date" value="${dueJalali ? dueJalali.format() : ""}" placeholder="۱۴۰۵/۰۵/۰۵" inputmode="numeric" />
+          </div>
+          <div>
+            <label class="field__label">${ICON_TIME}ساعت</label>
+            <input class="field__input" type="time" id="f-time" value="${existing?.dueTime || ""}" />
+          </div>
+        </div>
+        <p class="field__hint">فرمت تاریخ: سال/ماه/روز — مثلاً ۱۴۰۵/۰۵/۰۵</p>
+
+        <div class="field__divider"></div>
+
         <div class="field">
-          <label class="field__label">تاریخ سررسید (شمسی: سال/ماه/روز)</label>
-          <input class="field__input" id="f-date" value="${existing?.dueDateISO ? dueJalali.format() : ""}" placeholder="۱۴۰۵/۰۵/۰۵" />
+          <label class="field__label">${ICON_PRIORITY}اولویت</label>
+          <div class="segmented" id="f-priority-group">
+            ${priorityOptions
+              .map(
+                (p) => `
+              <button type="button" class="segmented__option ${p.key === currentPriority ? "active" : ""}" data-priority="${p.key}">
+                <span class="priority-dot priority-dot--${p.key}"></span>${p.label}
+              </button>`
+              )
+              .join("")}
+          </div>
+          <input type="hidden" id="f-priority" value="${currentPriority}" />
         </div>
+
         <div class="field">
-          <label class="field__label">ساعت</label>
-          <input class="field__input" type="time" id="f-time" value="${existing?.dueTime || ""}" />
+          <label class="field__label">${ICON_REPEAT}تکرار</label>
+          <div class="toggle-group" id="f-repeat-group">
+            ${repeatOptions
+              .map(
+                (r) =>
+                  `<button type="button" class="toggle-group__option ${r.key === currentRepeat ? "active" : ""}" data-repeat="${r.key}">${r.label}</button>`
+              )
+              .join("")}
+          </div>
+          <input type="hidden" id="f-repeat" value="${currentRepeat}" />
         </div>
+
         <div class="field">
-          <label class="field__label">اولویت</label>
-          <select class="field__select" id="f-priority">
-            <option value="high" ${existing?.priority === "high" ? "selected" : ""}>بالا</option>
-            <option value="medium" ${!existing || existing?.priority === "medium" ? "selected" : ""}>متوسط</option>
-            <option value="low" ${existing?.priority === "low" ? "selected" : ""}>پایین</option>
-          </select>
+          <label class="field__label">${ICON_BELL}یادآوری</label>
+          <div class="toggle-group" id="f-reminder-group">
+            ${reminderOptions
+              .map(
+                (r) =>
+                  `<button type="button" class="toggle-group__option ${r.key === currentReminder ? "active" : ""}" data-reminder="${r.key}">${r.label}</button>`
+              )
+              .join("")}
+          </div>
+          <input type="hidden" id="f-reminder" value="${currentReminder}" />
         </div>
-        <div class="field">
-          <label class="field__label">تکرار</label>
-          <select class="field__select" id="f-repeat">
-            <option value="none" ${!existing || existing?.repeat === "none" ? "selected" : ""}>بدون تکرار</option>
-            <option value="daily" ${existing?.repeat === "daily" ? "selected" : ""}>روزانه</option>
-            <option value="weekly" ${existing?.repeat === "weekly" ? "selected" : ""}>هفتگی</option>
-            <option value="monthly" ${existing?.repeat === "monthly" ? "selected" : ""}>ماهانه</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field__label">یادآوری (دقیقه قبل از سررسید)</label>
-          <select class="field__select" id="f-reminder">
-            <option value="">بدون یادآوری</option>
-            <option value="10" ${existing?.reminderMinutesBefore === 10 ? "selected" : ""}>۱۰ دقیقه قبل</option>
-            <option value="30" ${existing?.reminderMinutesBefore === 30 ? "selected" : ""}>۳۰ دقیقه قبل</option>
-            <option value="60" ${existing?.reminderMinutesBefore === 60 ? "selected" : ""}>۱ ساعت قبل</option>
-            <option value="1440" ${existing?.reminderMinutesBefore === 1440 ? "selected" : ""}>۱ روز قبل</option>
-          </select>
-        </div>
+
+        <div class="field__divider"></div>
+
         <button class="btn btn--primary btn--block" id="f-save">${existing ? "ذخیره تغییرات" : "افزودن کار"}</button>
-        ${existing ? '<button class="btn btn--danger btn--block" id="f-delete" style="margin-top:8px;">حذف کار</button>' : ""}
+        ${existing ? '<button class="btn btn--danger btn--block" id="f-delete" style="margin-top:10px;">حذف کار</button>' : ""}
       </div>`;
 
     this.overlay.classList.add("active");
+    this._bindSegmented("f-priority-group", "f-priority", "priority");
+    this._bindSegmented("f-repeat-group", "f-repeat", "repeat");
+    this._bindSegmented("f-reminder-group", "f-reminder", "reminder");
+
     this.overlay.querySelector("#sheet-close").addEventListener("click", () => this.close());
     this.overlay.querySelector("#f-save").addEventListener("click", () => this._saveTask(existing));
     this.overlay.querySelector("#f-delete")?.addEventListener("click", () => {
       taskController.deleteTask(existing.id);
       this.close();
+    });
+  }
+
+  _bindSegmented(groupId, hiddenInputId, datasetKey) {
+    const group = this.overlay.querySelector(`#${groupId}`);
+    const hiddenInput = this.overlay.querySelector(`#${hiddenInputId}`);
+    if (!group || !hiddenInput) return;
+    group.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        group.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        hiddenInput.value = btn.dataset[datasetKey];
+      });
     });
   }
 
@@ -135,12 +212,12 @@ export class SheetController {
           <button class="btn--icon" id="sheet-close">✕</button>
         </div>
         <div class="field">
-          <label class="field__label">نام لیست</label>
-          <input class="field__input" id="list-name" placeholder="مثلاً: کار، خانه، تحصیل" />
+          <label class="field__label">${ICON_LIST}نام لیست</label>
+          <input class="field__input" id="list-name" placeholder="مثلاً: کار، خانه، تحصیل" autofocus />
         </div>
         <div class="field">
-          <label class="field__label">رنگ</label>
-          <input class="field__input" type="color" id="list-color" value="#1ed760" style="height:44px;padding:4px;" />
+          <label class="field__label">${ICON_COLOR}رنگ</label>
+          <input class="field__input" type="color" id="list-color" value="#92f7b6" style="height:48px;padding:4px;cursor:pointer;" />
         </div>
         <button class="btn btn--primary btn--block" id="list-save">افزودن لیست</button>
       </div>`;

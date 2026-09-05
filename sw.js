@@ -1,6 +1,6 @@
 class ServiceWorkerManager {
   constructor() {
-    this.CACHE_VERSION = "1.0.11";
+    this.CACHE_VERSION = "1.0.12";
     this.CACHE_NAME = `task-v${this.CACHE_VERSION}`;
     this.OFFLINE_PAGE = "/offline.html";
 
@@ -43,8 +43,6 @@ class ServiceWorkerManager {
    * and fetch the truly latest files during the update phase.
    */
   _onInstall(event) {
-    self.skipWaiting(); // اختیاری: اگر می‌خواهید آپدیت‌ها در بک‌گراند فوراً اعمال شوند. اگر کاربر باید تایید کند، این خط را بردارید.
-
     event.waitUntil(
       caches.open(this.CACHE_NAME).then((cache) =>
         Promise.allSettled(

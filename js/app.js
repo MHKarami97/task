@@ -166,7 +166,6 @@ if ("serviceWorker" in navigator) {
   function showUpdateNotification() {
     const notification = document.getElementById("updateNotification");
     if (notification) {
-      notification.classList.remove("hidden");
       notification.classList.add("show");
     }
   }
@@ -197,7 +196,6 @@ if ("serviceWorker" in navigator) {
     if (dismissButton) {
       dismissButton.addEventListener("click", () => {
         notification.classList.remove("show");
-        notification.classList.add("hidden");
       });
     }
   });

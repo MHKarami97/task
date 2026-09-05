@@ -284,3 +284,21 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     right: 12px;
   }
 }
+
+.update-banner {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.update-banner.show {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -1,14 +1,5 @@
-/**
- * js/services/PushSubscriptionService.js
- * Wraps the browser Push API + talks to the Cloudflare Worker backend.
- * Kept separate from NotificationService (Single Responsibility).
- */
 import { PUSH_CONFIG } from "../config.js";
 
-/**
- * True only when launched as an installed PWA/TWA, never in a plain
- * browser tab. https://web.dev/learn/pwa/detection
- */
 export function isInstalledApp() {
   const isStandaloneDisplay = ["fullscreen", "standalone", "minimal-ui"].some(
     (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
@@ -45,6 +36,12 @@ class PushSubscriptionService {
       userVisibleOnly: true,
       applicationServerKey: this._urlBase64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
     });
+  }
+
+  async getActiveSubscription() {
+    if (!("serviceWorker" in navigator)) return null;
+    const registration = await navigator.serviceWorker.ready;
+    return registration.pushManager.getSubscription();
   }
 
   async syncReminder(taskId, remindAtIso) {
@@ -95,6 +92,20 @@ class PushSubscriptionService {
       }
     }
     return permission;
+  }
+
+  /** Explicitly turns push off — unsubscribes the browser, but the OS-level
+   * Notification permission itself stays "granted" (that can't be revoked
+   * from JS); only re-enabling creates a fresh subscription again. */
+  async disableAll() {
+    try {
+      const subscription = await this.getActiveSubscription();
+      if (subscription) await subscription.unsubscribe();
+      return true;
+    } catch (err) {
+      console.error("[PushSubscriptionService] disableAll failed", err);
+      return false;
+    }
   }
 }
 

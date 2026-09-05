@@ -6,14 +6,147 @@ import { SheetController } from "./controllers/SheetController.js";
 import { themeManager } from "./services/ThemeManager.js";
 
 /**
+ * Handles Service Worker registration, updates, and PWA install prompts.
+ * Strictly separated from UI logic.
+ */
+class PwaManager {
+  constructor() {
+    this.deferredPrompt = null;
+    this.newWorker = null;
+    this.installPromptDismissed = localStorage.getItem(
+      "installPromptDismissed",
+    );
+
+    this._bindInstallEvents();
+    this._initServiceWorker();
+  }
+
+  _bindInstallEvents() {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      if (!this.installPromptDismissed) {
+        this._showInstallPromptUI();
+      }
+    });
+
+    window.addEventListener("appinstalled", () => {
+      console.log("App installed successfully");
+      this.deferredPrompt = null;
+    });
+  }
+
+  _showInstallPromptUI() {
+    const promptEl = document.createElement("div");
+    promptEl.className = "install-prompt";
+    promptEl.innerHTML = `
+      <div class="install-prompt-text">
+        <div class="install-prompt-title">نصب اپلیکیشن</div>
+        <div class="install-prompt-desc">برای دسترسی سریع‌تر، اپ را نصب کنید</div>
+      </div>
+      <button class="install-btn" id="installBtn">نصب</button>
+      <button class="close-install" id="closeInstall">✕</button>
+    `;
+    document.body.appendChild(promptEl);
+
+    document
+      .getElementById("installBtn")
+      .addEventListener("click", async () => {
+        if (!this.deferredPrompt) return;
+        this.deferredPrompt.prompt();
+        const outcome = await this.deferredPrompt.userChoice;
+        if (outcome === "accepted")
+          console.log("User accepted the install prompt");
+        this.deferredPrompt = null;
+        promptEl.remove();
+      });
+
+    document.getElementById("closeInstall").addEventListener("click", () => {
+      localStorage.setItem("installPromptDismissed", "true");
+      promptEl.remove();
+    });
+  }
+
+  _initServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+
+    window.addEventListener("load", async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("sw.js");
+
+        if (registration.waiting) {
+          this._showUpdateNotification();
+          this.newWorker = registration.waiting;
+        }
+
+        registration.addEventListener("updatefound", () => {
+          this.newWorker = registration.installing;
+          this.newWorker.addEventListener("statechange", () => {
+            if (
+              this.newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              this._showUpdateNotification();
+            }
+          });
+        });
+      } catch (err) {
+        console.error("SW registration failed:", err);
+      }
+    });
+
+    // Handle incoming messages from SW (if any)
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "SW_UPDATED") this._showUpdateNotification();
+    });
+
+    // The ONLY correct way to refresh after an update: listen to controllerchange
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  }
+
+  _showUpdateNotification() {
+    const notification = document.getElementById("updateNotification");
+    if (!notification) return;
+
+    // UI Activation based on previous CSS fix
+    notification.classList.add("show");
+
+    const updateBtn = document.getElementById("updateButton");
+    const dismissBtn = document.getElementById("dismissUpdate");
+
+    // Clear old listeners by cloning or simply overwriting (here we assume it's shown once)
+    updateBtn?.addEventListener("click", () => {
+      // NOTE: We do NOT delete caches here. That is the SW's job on 'activate'.
+      // We only tell the new worker to take control.
+      if (this.newWorker) {
+        this.newWorker.postMessage({ type: "SKIP_WAITING" });
+      } else {
+        window.location.reload();
+      }
+    });
+
+    dismissBtn?.addEventListener("click", () => {
+      notification.classList.remove("show");
+    });
+  }
+}
+
+/**
  * App — application bootstrap and top-level wiring (Composition Root).
- * Keeps DOM references centralized and instantiates views/controllers once.
  */
 class App {
   constructor() {
     this.viewsContainer = document.getElementById("view-container");
     this.overlay = document.getElementById("sheet-overlay");
     this.sheet = new SheetController(this.overlay);
+
+    // Initialize PWA Manager
+    this.pwaManager = new PwaManager();
 
     this.views = {
       tasks: new TasksView(this._createViewEl("view-tasks"), this.sheet),
@@ -36,28 +169,47 @@ class App {
 
   _registerRoutes() {
     this.router
-      .register("tasks", () => this._activate("view-tasks", () => this.views.tasks.render()))
-      .register("calendar", () => this._activate("view-calendar", () => this.views.calendar.render()))
-      .register("about", () => this._activate("view-about", () => this.views.about.render()));
+      .register("tasks", () =>
+        this._activate("view-tasks", () => this.views.tasks.render()),
+      )
+      .register("calendar", () =>
+        this._activate("view-calendar", () => this.views.calendar.render()),
+      )
+      .register("about", () =>
+        this._activate("view-about", () => this.views.about.render()),
+      );
   }
 
   _activate(viewId, renderFn) {
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    document
+      .querySelectorAll(".view")
+      .forEach((v) => v.classList.remove("active"));
     document.getElementById(viewId).classList.add("active");
     renderFn();
     document.querySelectorAll(".bottom-nav__item[data-route]").forEach((el) => {
-      el.classList.toggle("active", el.dataset.route === viewId.replace("view-", ""));
+      el.classList.toggle(
+        "active",
+        el.dataset.route === viewId.replace("view-", ""),
+      );
     });
   }
 
   _bindGlobalUI() {
     document.querySelectorAll(".bottom-nav__item[data-route]").forEach((el) => {
-      el.addEventListener("click", () => this.router.navigate(el.dataset.route));
+      el.addEventListener("click", () =>
+        this.router.navigate(el.dataset.route),
+      );
     });
-    document.getElementById("fab-add")?.addEventListener("click", () => this.sheet.openTaskForm());
-    document.getElementById("fab-add-list")?.addEventListener("click", () => this.sheet.openListForm());
+    document
+      .getElementById("fab-add")
+      ?.addEventListener("click", () => this.sheet.openTaskForm());
+    document
+      .getElementById("fab-add-list")
+      ?.addEventListener("click", () => this.sheet.openListForm());
     ["theme-toggle-mobile", "theme-toggle-desktop"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("click", () => themeManager.toggle());
+      document
+        .getElementById(id)
+        ?.addEventListener("click", () => themeManager.toggle());
     });
   }
 
@@ -66,137 +218,9 @@ class App {
   }
 }
 
+// Single entry point
 document.addEventListener("DOMContentLoaded", () => {
   const app = new App();
   app.start();
   window.app = app; // exposed for debugging only
 });
-
-/* ==========================================================================
-   PWA Install Prompt
-   این بخش را قبلاً به‌اشتباه حذف کرده بودم؛ متعلق به همین فایل است، نه
-   index.html — الان برگشت.
-   ========================================================================== */
-let deferredPrompt;
-const installPromptDismissed = localStorage.getItem("installPromptDismissed");
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (!installPromptDismissed) showInstallPrompt();
-});
-
-function showInstallPrompt() {
-  const prompt = document.createElement("div");
-  prompt.className = "install-prompt";
-  prompt.innerHTML = `
-    <div class="install-prompt-text">
-      <div class="install-prompt-title">نصب اپلیکیشن</div>
-      <div class="install-prompt-desc">برای دسترسی سریع‌تر، اپ را نصب کنید</div>
-    </div>
-    <button class="install-btn" id="installBtn">نصب</button>
-    <button class="close-install" id="closeInstall">✕</button>
-  `;
-  document.body.appendChild(prompt);
-
-  document.getElementById("installBtn").addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const outcome = await deferredPrompt.userChoice;
-    if (outcome === "accepted") console.log("User accepted the install prompt");
-    deferredPrompt = null;
-    prompt.remove();
-  });
-
-  document.getElementById("closeInstall").addEventListener("click", () => {
-    localStorage.setItem("installPromptDismissed", "true");
-    prompt.remove();
-  });
-}
-
-window.addEventListener("appinstalled", () => {
-  console.log("App installed successfully");
-  deferredPrompt = null;
-});
-
-/* ==========================================================================
-   Service Worker registration + "new version available" notification
-   ========================================================================== */
-if ("serviceWorker" in navigator) {
-  let newWorker;
-
-  function trackInstalling(worker) {
-    newWorker = worker;
-    newWorker.addEventListener("statechange", () => {
-      if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-        showUpdateNotification();
-      }
-    });
-  }
-
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("sw.js")
-      .then((registration) => {
-        console.log("SW registered", registration);
-
-        if (registration.waiting) {
-          showUpdateNotification();
-        }
-
-        if (registration.installing) {
-          trackInstalling(registration.installing);
-        }
-
-        setInterval(() => registration.update(), 60000);
-
-        registration.addEventListener("updatefound", () => {
-          trackInstalling(registration.installing);
-        });
-      })
-      .catch((err) => console.log("SW registration failed", err));
-  });
-
-  navigator.serviceWorker.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "SW_UPDATED") showUpdateNotification();
-  });
-
-  navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
-
-  function showUpdateNotification() {
-    const notification = document.getElementById("updateNotification");
-    if (notification) {
-      notification.classList.add("show");
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const updateButton = document.getElementById("updateButton");
-    const dismissButton = document.getElementById("dismissUpdate");
-    const notification = document.getElementById("updateNotification");
-
-    if (updateButton) {
-      updateButton.addEventListener("click", () => {
-        if ("caches" in window) {
-          caches
-            .keys()
-            .then((names) => {
-              names.forEach((name) => caches.delete(name));
-            })
-            .then(() => {
-              if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
-              else window.location.reload();
-            });
-        } else {
-          window.location.reload();
-        }
-      });
-    }
-
-    if (dismissButton) {
-      dismissButton.addEventListener("click", () => {
-        notification.classList.remove("show");
-      });
-    }
-  });
-}

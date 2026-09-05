@@ -1,4 +1,4 @@
-const CACHE_NAME = "task-v1.0.1";
+const CACHE_NAME = "task-v1.0.2";
 const OFFLINE_PAGE = "/offline.html";
 
 const urlsToCache = [
@@ -10,24 +10,6 @@ const urlsToCache = [
   "./css/layout.css",
   "./css/components.css",
   "./css/responsive.css",
-  "./js/app.js",
-  "./js/router.js",
-  "./js/config.js",
-  "./js/utils/PersianDate.js",
-  "./js/models/Task.js",
-  "./js/models/TaskList.js",
-  "./js/repositories/StorageAdapter.js",
-  "./js/repositories/TaskRepository.js",
-  "./js/repositories/ListRepository.js",
-  "./js/services/EventBus.js",
-  "./js/services/ThemeManager.js",
-  "./js/services/NotificationService.js",
-  "./js/services/PushSubscriptionService.js",
-  "./js/services/SortStrategy.js",
-  "./js/controllers/TaskController.js",
-  "./js/views/TasksView.js",
-  "./js/views/CalendarView.js",
-  "./js/views/AboutView.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "/assets/fonts/Vazirmatn-font-face.css",

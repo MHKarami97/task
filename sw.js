@@ -1,4 +1,4 @@
-const CACHE_NAME = "task-v1.0.3";
+const CACHE_NAME = "task-v1.0.4";
 const OFFLINE_PAGE = "/offline.html";
 
 const urlsToCache = [
@@ -10,8 +10,8 @@ const urlsToCache = [
   "./css/layout.css",
   "./css/components.css",
   "./css/responsive.css",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./assets/icons/favicon-192.png",
+  "./assets/icons/favicon-512.png",
   "/assets/fonts/Vazirmatn-font-face.css",
   "/assets/fonts/webfonts/Vazirmatn-Black.woff2",
   "/assets/fonts/webfonts/Vazirmatn-Bold.woff2",
@@ -22,7 +22,6 @@ const urlsToCache = [
   "/assets/fonts/webfonts/Vazirmatn-Regular.woff2",
   "/assets/fonts/webfonts/Vazirmatn-SemiBold.woff2",
   "/assets/fonts/webfonts/Vazirmatn-Thin.woff2",
-  "/assets/fonts/webfonts/Vazirmatn[wght].woff2",
 ];
 
 // Helper function to determine if a URL should be cached
@@ -30,14 +29,12 @@ function shouldCache(url) {
   const urlObj = new URL(url);
   const pathname = urlObj.pathname;
 
-  // Cache static assets
   if (
     pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)
   ) {
     return true;
   }
 
-  // Cache HTML pages from the same origin
   if (
     urlObj.origin === self.location.origin &&
     (pathname.endsWith("/") || pathname.endsWith(".html"))
@@ -48,13 +45,25 @@ function shouldCache(url) {
   return false;
 }
 
-// Installation of caching patterns
+// Installation of caching patterns.
+// Deliberately NOT using cache.addAll() — it is all-or-nothing: a single
+// missing/renamed file (404) rejects the whole install, the new service
+// worker gets marked "redundant" instead of "installed", and the
+// "new version available" banner then never fires (this was the actual
+// bug: bumping CACHE_NAME alone couldn't fix it because install itself
+// was failing). Caching each URL independently means one bad entry only
+// logs a warning instead of blocking every future update forever.
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("Opened cache");
-      return cache.addAll(urlsToCache);
-    }),
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        urlsToCache.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn(`[sw] failed to precache "${url}" — skipping`, err);
+          }),
+        ),
+      ),
+    ),
   );
 });
 
@@ -75,7 +84,6 @@ self.addEventListener("activate", (event) => {
         );
       })
       .then(() => {
-        // Notify all clients about the update
         return self.clients.matchAll().then((clients) => {
           clients.forEach((client) => {
             client.postMessage({
@@ -99,14 +107,12 @@ self.addEventListener("message", (event) => {
 
 // Fetch and cache strategy with offline fallback
 self.addEventListener("fetch", (event) => {
-  // Skip non-GET requests
   if (event.request.method !== "GET") {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Return cached response if found
       if (response) {
         return response;
       }
@@ -115,7 +121,6 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(fetchRequest)
         .then((response) => {
-          // Don't cache if response is not valid
           if (
             !response ||
             response.status !== 200 ||
@@ -124,10 +129,8 @@ self.addEventListener("fetch", (event) => {
             return response;
           }
 
-          // Check if this URL should be cached
           if (shouldCache(event.request.url)) {
             const responseToCache = response.clone();
-
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
@@ -138,12 +141,10 @@ self.addEventListener("fetch", (event) => {
         .catch((error) => {
           console.log("Fetch failed:", error);
 
-          // Return offline page for navigation requests
           if (event.request.mode === "navigate") {
             return caches.match(OFFLINE_PAGE);
           }
 
-          // For other requests, try to return cached version or reject
           return caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
               return cachedResponse;
@@ -162,15 +163,11 @@ self.addEventListener("sync", (event) => {
   }
 });
 
-// Example function to sync data
 async function syncData() {
   console.log("Syncing data...");
 }
 
 // Push notification event — expects a JSON payload { title, body, url, taskId }
-// from the Worker (see worker/src/reminderScheduler.ts). The previous version
-// always used event.data.text() as the body with a hardcoded generic title,
-// so it could never show which task the reminder was actually for.
 self.addEventListener("push", (event) => {
   let payload = { title: "یادآور", body: "" };
 
@@ -196,16 +193,19 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
-// Notification click event
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url ?? "./#tasks";
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      const existing = clientList.find((client) => client.url.includes(targetUrl));
-      if (existing) return existing.focus();
-      return self.clients.openWindow(targetUrl);
-    }),
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        const existing = clientList.find((client) =>
+          client.url.includes(targetUrl),
+        );
+        if (existing) return existing.focus();
+        return self.clients.openWindow(targetUrl);
+      }),
   );
 });

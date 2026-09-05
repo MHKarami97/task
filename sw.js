@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "task-v1.0.0";
+const CACHE_NAME = "task-v1.0.0";
 const OFFLINE_PAGE = "/offline.html";
 
 const urlsToCache = [
@@ -12,6 +12,7 @@ const urlsToCache = [
   "./css/responsive.css",
   "./js/app.js",
   "./js/router.js",
+  "./js/config.js",
   "./js/utils/PersianDate.js",
   "./js/models/Task.js",
   "./js/models/TaskList.js",
@@ -21,6 +22,7 @@ const urlsToCache = [
   "./js/services/EventBus.js",
   "./js/services/ThemeManager.js",
   "./js/services/NotificationService.js",
+  "./js/services/PushSubscriptionService.js",
   "./js/services/SortStrategy.js",
   "./js/controllers/TaskController.js",
   "./js/views/TasksView.js",
@@ -183,25 +185,45 @@ async function syncData() {
   console.log("Syncing data...");
 }
 
-// Push notification event
+// Push notification event — expects a JSON payload { title, body, url, taskId }
+// from the Worker (see worker/src/reminderScheduler.ts). The previous version
+// always used event.data.text() as the body with a hardcoded generic title,
+// so it could never show which task the reminder was actually for.
 self.addEventListener("push", (event) => {
+  let payload = { title: "یادآور", body: "" };
+
+  try {
+    if (event.data) payload = event.data.json();
+  } catch (err) {
+    console.error("[sw] failed to parse push payload", err);
+    return;
+  }
+
   const options = {
-    body: event.data ? event.data.text() : "اعلان جدید",
-    icon: "/assets/icons/favicon.png",
-    badge: "/assets/icons/favicon.png",
+    body: payload.body,
+    icon: "./assets/icons/favicon-192.png",
+    badge: "./assets/icons/favicon-96.png",
+    dir: "rtl",
+    lang: "fa",
     vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1,
-    },
+    tag: payload.taskId ?? "task-reminder",
+    renotify: true,
+    data: { url: payload.url ?? "./#tasks", taskId: payload.taskId ?? null },
   };
 
-  event.waitUntil(self.registration.showNotification("بدن ساز", options));
+  event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
 // Notification click event
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url ?? "./#tasks";
 
-  event.waitUntil(clients.openWindow("/"));
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      const existing = clientList.find((client) => client.url.includes(targetUrl));
+      if (existing) return existing.focus();
+      return self.clients.openWindow(targetUrl);
+    }),
+  );
 });

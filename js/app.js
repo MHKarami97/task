@@ -4,8 +4,6 @@ import { CalendarView } from "./views/CalendarView.js";
 import { AboutView } from "./views/AboutView.js";
 import { SheetController } from "./controllers/SheetController.js";
 import { themeManager } from "./services/ThemeManager.js";
-import { notificationService } from "./services/NotificationService.js";
-import { taskController } from "./controllers/TaskController.js";
 
 /**
  * App — application bootstrap and top-level wiring (Composition Root).
@@ -56,171 +54,142 @@ class App {
     document.querySelectorAll(".bottom-nav__item[data-route]").forEach((el) => {
       el.addEventListener("click", () => this.router.navigate(el.dataset.route));
     });
-
     document.getElementById("fab-add")?.addEventListener("click", () => this.sheet.openTaskForm());
     document.getElementById("fab-add-list")?.addEventListener("click", () => this.sheet.openListForm());
-
     ["theme-toggle-mobile", "theme-toggle-desktop"].forEach((id) => {
       document.getElementById(id)?.addEventListener("click", () => themeManager.toggle());
-    });
-
-    document.getElementById("notif-permission-btn")?.addEventListener("click", () => {
-      notificationService.requestPermission();
     });
   }
 
   start() {
     this.router.start("tasks");
-    if ("Notification" in window && Notification.permission === "default") {
-      notificationService.requestPermission();
-    }
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const app = new App();
   app.start();
-  window.__app = app; // exposed for debugging only
+  window.app = app; // exposed for debugging only
 });
 
-
-
-// PWA Install Prompt
+/* ==========================================================================
+   PWA Install Prompt
+   این بخش را قبلاً به‌اشتباه حذف کرده بودم؛ متعلق به همین فایل است، نه
+   index.html — الان برگشت.
+   ========================================================================== */
 let deferredPrompt;
-const installPromptDismissed = localStorage.getItem('installPromptDismissed');
+const installPromptDismissed = localStorage.getItem("installPromptDismissed");
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-
-    if (!installPromptDismissed) {
-    showInstallPrompt();
-    }
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!installPromptDismissed) showInstallPrompt();
 });
 
 function showInstallPrompt() {
-    const prompt = document.createElement('div');
-    prompt.className = 'install-prompt';
-    prompt.innerHTML = `
-        <div class="install-prompt-text">
-            <div class="install-prompt-title">📱 نصب اپلیکیشن</div>
-        </div>
-        <button class="install-btn" id="installBtn">نصب</button>
-        <button class="close-install" id="closeInstall">✕</button>
-    `;
-    document.body.appendChild(prompt);
+  const prompt = document.createElement("div");
+  prompt.className = "install-prompt";
+  prompt.innerHTML = `
+    <div class="install-prompt-text">
+      <div class="install-prompt-title">نصب اپلیکیشن</div>
+      <div class="install-prompt-desc">برای دسترسی سریع‌تر، اپ را نصب کنید</div>
+    </div>
+    <button class="install-btn" id="installBtn">نصب</button>
+    <button class="close-install" id="closeInstall">✕</button>
+  `;
+  document.body.appendChild(prompt);
 
-    document.getElementById('installBtn').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
+  document.getElementById("installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const outcome = await deferredPrompt.userChoice;
+    if (outcome === "accepted") console.log("User accepted the install prompt");
+    deferredPrompt = null;
+    prompt.remove();
+  });
 
-        deferredPrompt.prompt();
-        const {outcome} = await deferredPrompt.userChoice;
-
-        if (outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-        }
-
-        deferredPrompt = null;
-        prompt.remove();
-    });
-
-    document.getElementById('closeInstall').addEventListener('click', () => {
-        localStorage.setItem('installPromptDismissed', 'true');
-        prompt.remove();
-    });
+  document.getElementById("closeInstall").addEventListener("click", () => {
+    localStorage.setItem("installPromptDismissed", "true");
+    prompt.remove();
+  });
 }
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-    let newWorker;
+window.addEventListener("appinstalled", () => {
+  console.log("App installed successfully");
+  deferredPrompt = null;
+});
 
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('SW registered:', registration);
+/* ==========================================================================
+   Service Worker registration + "new version available" notification
+   ========================================================================== */
+if ("serviceWorker" in navigator) {
+  let newWorker;
 
-                // Check for updates periodically
-                setInterval(() => {
-                    registration.update();
-                }, 60000); // Check every minute
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("sw.js")
+      .then((registration) => {
+        console.log("SW registered", registration);
 
-                // Listen for waiting worker
-                registration.addEventListener('updatefound', () => {
-                    newWorker = registration.installing;
+        // Check for updates periodically (every minute)
+        setInterval(() => registration.update(), 60000);
 
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New service worker is ready
-                            showUpdateNotification();
-                        }
-                    });
-                });
-            })
-            .catch(err => {
-                console.log('SW registration failed:', err);
-            });
-
-        // Listen for messages from service worker
-        navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'SW_UPDATED') {
-                showUpdateNotification();
+        registration.addEventListener("updatefound", () => {
+          newWorker = registration.installing;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              // New service worker is ready
+              showUpdateNotification();
             }
+          });
         });
+      })
+      .catch((err) => console.log("SW registration failed", err));
+  });
 
-        // Handle controller change
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
-        });
-    });
+  // Listen for messages from the service worker (see sw.js "activate" handler)
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "SW_UPDATED") showUpdateNotification();
+  });
 
-    // Show update notification
-    function showUpdateNotification() {
-        const notification = document.getElementById('updateNotification');
-        if (notification) {
-            notification.classList.remove('hidden');
-            notification.classList.add('show');
+  navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
+
+  function showUpdateNotification() {
+    const notification = document.getElementById("updateNotification");
+    if (notification) {
+      notification.classList.remove("hidden");
+      notification.classList.add("show");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const updateButton = document.getElementById("updateButton");
+    const dismissButton = document.getElementById("dismissUpdate");
+    const notification = document.getElementById("updateNotification");
+
+    if (updateButton) {
+      updateButton.addEventListener("click", () => {
+        if ("caches" in window) {
+          caches
+            .keys()
+            .then((names) => {
+              names.forEach((name) => caches.delete(name));
+            })
+            .then(() => {
+              if (newWorker) newWorker.postMessage({ type: "SKIP_WAITING" });
+              else window.location.reload();
+            });
+        } else {
+          window.location.reload();
         }
+      });
     }
 
-    // Handle update button click
-    document.addEventListener('DOMContentLoaded', () => {
-        const updateButton = document.getElementById('updateButton');
-        const dismissButton = document.getElementById('dismissUpdate');
-        const notification = document.getElementById('updateNotification');
-
-        if (updateButton) {
-            updateButton.addEventListener('click', () => {
-                // Clear all caches and reload
-                if ('caches' in window) {
-                    caches.keys().then(names => {
-                        names.forEach(name => {
-                            caches.delete(name);
-                        });
-                    }).then(() => {
-                        // Tell the service worker to skip waiting
-                        if (newWorker) {
-                            newWorker.postMessage({type: 'SKIP_WAITING'});
-                        } else {
-                            window.location.reload();
-                        }
-                    });
-                } else {
-                    window.location.reload();
-                }
-            });
-        }
-
-        if (dismissButton) {
-            dismissButton.addEventListener('click', () => {
-                notification.classList.remove('show');
-                notification.classList.add('hidden');
-            });
-        }
-    });
+    if (dismissButton) {
+      dismissButton.addEventListener("click", () => {
+        notification.classList.remove("show");
+        notification.classList.add("hidden");
+      });
+    }
+  });
 }
-
-// Handle app installation
-window.addEventListener('appinstalled', () => {
-    console.log('App installed successfully');
-    deferredPrompt = null;
-});

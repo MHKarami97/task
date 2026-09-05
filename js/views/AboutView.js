@@ -3,6 +3,9 @@ import { notificationService } from "../services/NotificationService.js";
 import { isInstalledApp, pushSubscriptionService } from "../services/PushSubscriptionService.js";
 
 export class AboutView {
+  #renderSeq = 0;
+  #actionInFlight = false;
+
   constructor(rootEl) {
     this.root = rootEl;
   }
@@ -11,14 +14,21 @@ export class AboutView {
     if (!isInstalledApp() || !("Notification" in window)) return "unsupported";
     if (Notification.permission === "denied") return "denied";
     if (Notification.permission === "default") return "default";
-    const subscription = await pushSubscriptionService.getActiveSubscription();
+    var subscription = await pushSubscriptionService.getActiveSubscription();
     return subscription ? "active" : "inactive";
   }
 
   _notificationCardHTML(state) {
+    if (state === "loading") {
+      return `
+        <div class="card about-section" id="notif-card-slot">
+          <h3>یادآور پوش</h3>
+          <p class="text-secondary" style="margin-bottom:0">در حال بررسی وضعیت اعلان...</p>
+        </div>`;
+    }
     if (state === "default") {
       return `
-        <div class="card about-section">
+        <div class="card about-section" id="notif-card-slot">
           <h3>یادآور پوش</h3>
           <p class="text-secondary" style="margin-bottom:12px">
             برای دریافت یادآور حتی وقتی برنامه بسته است، اعلان را فعال کنید.
@@ -28,7 +38,7 @@ export class AboutView {
     }
     if (state === "active") {
       return `
-        <div class="card about-section">
+        <div class="card about-section" id="notif-card-slot">
           <h3>یادآور پوش</h3>
           <p class="text-secondary" style="margin-bottom:12px">
             ✓ اعلان فعال است — یادآورهای شما حتی وقتی برنامه بسته باشد ارسال می‌شوند.
@@ -38,7 +48,7 @@ export class AboutView {
     }
     if (state === "inactive") {
       return `
-        <div class="card about-section">
+        <div class="card about-section" id="notif-card-slot">
           <h3>یادآور پوش</h3>
           <p class="text-secondary" style="margin-bottom:12px">
             مجوز اعلان دارید ولی در حال حاضر غیرفعال است.
@@ -48,7 +58,7 @@ export class AboutView {
     }
     if (state === "denied") {
       return `
-        <div class="card about-section">
+        <div class="card about-section" id="notif-card-slot">
           <h3>یادآور پوش</h3>
           <p class="text-secondary" style="margin-bottom:12px">
             دسترسی اعلان قبلاً رد شده است. مرورگر اجازه نمی‌دهد دوباره از داخل
@@ -61,14 +71,11 @@ export class AboutView {
           <button class="btn btn--secondary btn--block" id="notif-recheck-btn">بررسی دوباره</button>
         </div>`;
     }
-    return "";
+    return `<div class="card about-section" id="notif-card-slot"></div>`;
   }
 
-  async render() {
-    const stats = taskController.getStats();
-    const notificationState = await this._getNotificationState();
-
-    this.root.innerHTML = `
+  _shellHTML(stats, notificationCardHTML) {
+    return `
       <div class="about-hero">
         <div class="about-avatar">MHK</div>
         <h2>محمدحسین کرمی</h2>
@@ -78,7 +85,7 @@ export class AboutView {
         </div>
       </div>
 
-      ${this._notificationCardHTML(notificationState)}
+      ${notificationCardHTML}
 
       <div class="card about-section">
         <h3>آمار</h3>
@@ -98,49 +105,101 @@ export class AboutView {
         <button class="btn btn--secondary btn--block" id="clear-cache-btn">پاک‌سازی کش و بارگذاری مجدد</button>
       </div>
     `;
-
-    this._bindEvents();
   }
 
-  _bindEvents() {
-    // Only for state "default" — permission is still undecided, a real
-    // native prompt can appear.
-    document.getElementById("notif-permission-btn")?.addEventListener("click", async () => {
-      await notificationService.requestPermission();
-      this.render();
-    });
+  /**
+   * Renders the shell synchronously (with a loading placeholder for the
+   * notification card), then patches only the notification card once its
+   * async state resolves. `seq` is used to discard the async result if a
+   * newer render() call has since started — this prevents two overlapping
+   * renders from clobbering each other's DOM.
+   */
+  async render() {
+    var seq = ++this.#renderSeq;
+    var stats = taskController.getStats();
 
-    // Only for state "inactive" — permission already granted, just need a
-    // fresh subscription; calling notificationService.requestPermission()
-    // here would short-circuit and do nothing, so we go straight to the
-    // subscription service instead.
-    document.getElementById("notif-reenable-btn")?.addEventListener("click", async () => {
-      await pushSubscriptionService.enable();
-      this.render();
-    });
+    this.root.innerHTML = this._shellHTML(stats, this._notificationCardHTML("loading"));
+    this._bindStaticEvents();
 
-    document.getElementById("notif-disable-btn")?.addEventListener("click", async () => {
-      await pushSubscriptionService.disableAll();
-      this.render();
-    });
+    var notificationState = await this._getNotificationState();
+    if (seq !== this.#renderSeq) return; // a newer render superseded this one
 
-    document.getElementById("notif-recheck-btn")?.addEventListener("click", () => {
-      this.render();
-    });
+    var slot = this.root.querySelector("#notif-card-slot");
+    if (slot) {
+      slot.outerHTML = this._notificationCardHTML(notificationState);
+      this._bindNotificationEvents();
+    }
+  }
 
-    document.getElementById("clear-cache-btn")?.addEventListener("click", async () => {
-      try {
-        if ("serviceWorker" in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map((r) => r.unregister()));
+  _bindStaticEvents() {
+    document.getElementById("clear-cache-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال پاک‌سازی...", async () => {
+        try {
+          if ("serviceWorker" in navigator) {
+            var registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((r) => r.unregister()));
+          }
+          if ("caches" in window) {
+            var names = await caches.keys();
+            await Promise.all(names.map((name) => caches.delete(name)));
+          }
+        } finally {
+          window.location.reload();
         }
-        if ("caches" in window) {
-          const names = await caches.keys();
-          await Promise.all(names.map((name) => caches.delete(name)));
-        }
-      } finally {
-        window.location.reload();
+      }, { rerender: false }); // page reloads regardless, no need to re-render
+    });
+  }
+
+  _bindNotificationEvents() {
+    document.getElementById("notif-permission-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال درخواست مجوز...", () =>
+        notificationService.requestPermission()
+      );
+    });
+
+    document.getElementById("notif-reenable-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال فعال‌سازی...", () =>
+        pushSubscriptionService.enable()
+      );
+    });
+
+    document.getElementById("notif-disable-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال غیرفعال‌سازی...", () =>
+        pushSubscriptionService.disableAll()
+      );
+    });
+
+    document.getElementById("notif-recheck-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال بررسی...", () => Promise.resolve());
+    });
+  }
+
+  /**
+   * Runs a single async action exclusively: disables the triggering button
+   * *synchronously* (before any await) so a second click in the same tick
+   * can't start a second overlapping operation, restores it in `finally`,
+   * and swallows/logs failures so the UI never gets stuck disabled forever.
+   */
+  async _runExclusive(buttonEl, busyLabel, action, { rerender = true } = {}) {
+    if (this.#actionInFlight || !buttonEl || buttonEl.disabled) return;
+
+    this.#actionInFlight = true;
+    var originalLabel = buttonEl.textContent;
+    buttonEl.disabled = true;
+    buttonEl.textContent = busyLabel;
+
+    try {
+      await action();
+    } catch (err) {
+      console.error("[AboutView] action failed:", err);
+    } finally {
+      this.#actionInFlight = false;
+      if (rerender) {
+        await this.render();
+      } else {
+        buttonEl.disabled = false;
+        buttonEl.textContent = originalLabel;
       }
-    });
+    }
   }
 }

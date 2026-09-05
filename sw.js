@@ -1,6 +1,6 @@
 class ServiceWorkerManager {
   constructor() {
-    this.CACHE_VERSION = "1.0.10";
+    this.CACHE_VERSION = "1.0.11";
     this.CACHE_NAME = `task-v${this.CACHE_VERSION}`;
     this.OFFLINE_PAGE = "/offline.html";
 

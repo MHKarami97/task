@@ -1,13 +1,7 @@
-/**
- * js/views/AboutView.js
- * Adds the push-notification enable card — rendered ONLY when running as
- * an installed PWA/TWA and permission hasn't been decided yet.
- */
 import { taskController } from "../controllers/TaskController.js";
 import { notificationService } from "../services/NotificationService.js";
 import { isInstalledApp } from "../services/PushSubscriptionService.js";
 
-/** AboutView introduces the developer and links to their personal site. */
 export class AboutView {
   constructor(rootEl) {
     this.root = rootEl;
@@ -52,6 +46,14 @@ export class AboutView {
           <span class="chip">عقب‌افتاده: ${stats.overdue}</span>
         </div>
       </div>
+
+      <div class="card about-section">
+        <h3>عیب‌یابی</h3>
+        <p class="text-secondary" style="margin-bottom:12px">
+          اگر اپ ظاهر قدیمی یا رفتار عجیب دارد (بعد از یک به‌روزرسانی)، این را بزنید.
+        </p>
+        <button class="btn btn--secondary btn--block" id="clear-cache-btn">پاک‌سازی کش و بارگذاری مجدد</button>
+      </div>
     `;
 
     this._bindEvents();
@@ -61,6 +63,25 @@ export class AboutView {
     document.getElementById("notif-permission-btn")?.addEventListener("click", async () => {
       const result = await notificationService.requestPermission();
       if (result === "granted") this.render();
+    });
+
+    document.getElementById("clear-cache-btn")?.addEventListener("click", async () => {
+      try {
+        // 1) Unregister every service worker controlling this origin.
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((r) => r.unregister()));
+        }
+        // 2) Delete every Cache Storage entry (all versions, not just current).
+        if ("caches" in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map((name) => caches.delete(name)));
+        }
+      } finally {
+        // 3) Hard reload so the page re-registers a fresh service worker
+        //    and re-fetches everything from the network.
+        window.location.reload();
+      }
     });
   }
 }

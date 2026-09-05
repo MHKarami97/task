@@ -1,4 +1,4 @@
-const CACHE_NAME = "task-v1.0.6";
+const CACHE_NAME = "task-v1.0.5";
 const OFFLINE_PAGE = "/offline.html";
 
 const urlsToCache = [
@@ -24,7 +24,6 @@ const urlsToCache = [
   "/assets/fonts/webfonts/Vazirmatn-Thin.woff2",
 ];
 
-// Helper function to determine if a URL should be cached
 function shouldCache(url) {
   const urlObj = new URL(url);
   const pathname = urlObj.pathname;
@@ -45,29 +44,25 @@ function shouldCache(url) {
   return false;
 }
 
-// Installation of caching patterns.
-// Deliberately NOT using cache.addAll() — it is all-or-nothing: a single
-// missing/renamed file (404) rejects the whole install, the new service
-// worker gets marked "redundant" instead of "installed", and the
-// "new version available" banner then never fires (this was the actual
-// bug: bumping CACHE_NAME alone couldn't fix it because install itself
-// was failing). Caching each URL independently means one bad entry only
-// logs a warning instead of blocking every future update forever.
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.allSettled(
         urlsToCache.map((url) =>
-          cache.add(url).catch((err) => {
-            console.warn(`[sw] failed to precache "${url}" — skipping`, err);
-          }),
+          fetch(url, { cache: "no-store" })
+            .then((response) => {
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              return cache.put(url, response);
+            })
+            .catch((err) => {
+              console.warn(`[sw] failed to precache "${url}" — skipping`, err);
+            }),
         ),
       ),
     ),
   );
 });
 
-// Send message to all clients when new version is ready
 self.addEventListener("activate", (event) => {
   const cacheWhitelist = [CACHE_NAME];
 
@@ -98,45 +93,46 @@ self.addEventListener("activate", (event) => {
   return self.clients.claim();
 });
 
-// Listen for skip waiting message from page
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-// Fetch and cache strategy with offline fallback
+// Fetch strategy — network fetch now also uses { cache: "no-store" } for
+// the same reason as install: this is what actually fixes "I have to
+// manually open the file's DevTools entry and clear its cache" — that was
+// the browser's disk cache serving fetch() a stale response even though
+// Cache Storage itself was already empty for that URL.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
       }
 
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest)
-        .then((response) => {
+      return fetch(event.request.url, { cache: "no-store" })
+        .then((networkResponse) => {
           if (
-            !response ||
-            response.status !== 200 ||
-            response.type === "error"
+            !networkResponse ||
+            networkResponse.status !== 200 ||
+            networkResponse.type === "error"
           ) {
-            return response;
+            return networkResponse;
           }
 
           if (shouldCache(event.request.url)) {
-            const responseToCache = response.clone();
+            const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
           }
 
-          return response;
+          return networkResponse;
         })
         .catch((error) => {
           console.log("Fetch failed:", error);
@@ -145,9 +141,9 @@ self.addEventListener("fetch", (event) => {
             return caches.match(OFFLINE_PAGE);
           }
 
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
+          return caches.match(event.request).then((cachedResponse2) => {
+            if (cachedResponse2) {
+              return cachedResponse2;
             }
             throw error;
           });
@@ -156,7 +152,6 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Background sync event
 self.addEventListener("sync", (event) => {
   if (event.tag === "sync-data") {
     event.waitUntil(syncData());
@@ -167,7 +162,6 @@ async function syncData() {
   console.log("Syncing data...");
 }
 
-// Push notification event — expects a JSON payload { title, body, url, taskId }
 self.addEventListener("push", (event) => {
   let payload = { title: "یادآور", body: "" };
 

@@ -125,29 +125,38 @@ window.addEventListener("appinstalled", () => {
 if ("serviceWorker" in navigator) {
   let newWorker;
 
+  function trackInstalling(worker) {
+    newWorker = worker;
+    newWorker.addEventListener("statechange", () => {
+      if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+        showUpdateNotification();
+      }
+    });
+  }
+
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("sw.js")
       .then((registration) => {
         console.log("SW registered", registration);
 
-        // Check for updates periodically (every minute)
+        if (registration.waiting) {
+          showUpdateNotification();
+        }
+
+        if (registration.installing) {
+          trackInstalling(registration.installing);
+        }
+
         setInterval(() => registration.update(), 60000);
 
         registration.addEventListener("updatefound", () => {
-          newWorker = registration.installing;
-          newWorker.addEventListener("statechange", () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              // New service worker is ready
-              showUpdateNotification();
-            }
-          });
+          trackInstalling(registration.installing);
         });
       })
       .catch((err) => console.log("SW registration failed", err));
   });
 
-  // Listen for messages from the service worker (see sw.js "activate" handler)
   navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "SW_UPDATED") showUpdateNotification();
   });

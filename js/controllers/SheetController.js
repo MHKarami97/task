@@ -3,15 +3,24 @@ import PersianDate from "../utils/PersianDate.js";
 
 const { JalaliDate } = PersianDate;
 
-const ICON_TITLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>';
-const ICON_NOTES = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>';
-const ICON_LIST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="5" cy="18" r="1.5"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
-const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>';
-const ICON_TIME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
-const ICON_PRIORITY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4M4 4h13l-3 4 3 4H4"/></svg>';
-const ICON_REPEAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
-const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 3 1 5 2 6H4c1-1 2-3 2-6z"/><path d="M9 20a3 3 0 0 0 6 0"/></svg>';
-const ICON_COLOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+const ICON_TITLE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>';
+const ICON_NOTES =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>';
+const ICON_LIST =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="5" cy="18" r="1.5"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
+const ICON_DATE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>';
+const ICON_TIME =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+const ICON_PRIORITY =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4M4 4h13l-3 4 3 4H4"/></svg>';
+const ICON_REPEAT =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+const ICON_BELL =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 3 1 5 2 6H4c1-1 2-3 2-6z"/><path d="M9 20a3 3 0 0 0 6 0"/></svg>';
+const ICON_COLOR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
 
 /**
  * SheetController — manages the bottom-sheet modal used for both
@@ -32,9 +41,13 @@ export class SheetController {
   }
 
   openTaskForm(taskId = null, defaultListId = "default") {
-    const existing = taskId ? taskController.taskRepository.getById(taskId) : null;
+    const existing = taskId
+      ? taskController.taskRepository.getById(taskId)
+      : null;
     const lists = taskController.getAllLists();
-    const dueJalali = existing?.dueDateISO ? JalaliDate.fromISO(existing.dueDateISO) : null;
+    const dueJalali = existing?.dueDateISO
+      ? JalaliDate.fromISO(existing.dueDateISO)
+      : null;
 
     const priorityOptions = [
       { key: "high", label: "بالا" },
@@ -57,7 +70,10 @@ export class SheetController {
 
     const currentPriority = existing?.priority || "medium";
     const currentRepeat = existing?.repeat || "none";
-    const currentReminder = existing?.reminderMinutesBefore != null ? String(existing.reminderMinutesBefore) : "";
+    const currentReminder =
+      existing?.reminderMinutesBefore != null
+        ? String(existing.reminderMinutesBefore)
+        : "";
 
     this.overlay.innerHTML = `
       <div class="bottom-sheet">
@@ -110,7 +126,7 @@ export class SheetController {
                 (p) => `
               <button type="button" class="segmented__option ${p.key === currentPriority ? "active" : ""}" data-priority="${p.key}">
                 <span class="priority-dot priority-dot--${p.key}"></span>${p.label}
-              </button>`
+              </button>`,
               )
               .join("")}
           </div>
@@ -123,7 +139,7 @@ export class SheetController {
             ${repeatOptions
               .map(
                 (r) =>
-                  `<button type="button" class="toggle-group__option ${r.key === currentRepeat ? "active" : ""}" data-repeat="${r.key}">${r.label}</button>`
+                  `<button type="button" class="toggle-group__option ${r.key === currentRepeat ? "active" : ""}" data-repeat="${r.key}">${r.label}</button>`,
               )
               .join("")}
           </div>
@@ -136,7 +152,7 @@ export class SheetController {
             ${reminderOptions
               .map(
                 (r) =>
-                  `<button type="button" class="toggle-group__option ${r.key === currentReminder ? "active" : ""}" data-reminder="${r.key}">${r.label}</button>`
+                  `<button type="button" class="toggle-group__option ${r.key === currentReminder ? "active" : ""}" data-reminder="${r.key}">${r.label}</button>`,
               )
               .join("")}
           </div>
@@ -157,8 +173,12 @@ export class SheetController {
     this._pickerSelectedDate = dueJalali;
     this._bindDatePicker();
 
-    this.overlay.querySelector("#sheet-close").addEventListener("click", () => this.close());
-    this.overlay.querySelector("#f-save").addEventListener("click", () => this._saveTask(existing));
+    this.overlay
+      .querySelector("#sheet-close")
+      .addEventListener("click", () => this.close());
+    this.overlay
+      .querySelector("#f-save")
+      .addEventListener("click", () => this._saveTask(existing));
     this.overlay.querySelector("#f-delete")?.addEventListener("click", () => {
       taskController.deleteTask(existing.id);
       this.close();
@@ -193,7 +213,10 @@ export class SheetController {
         document.removeEventListener("click", closeOnOutsideClick);
       }
     };
-    setTimeout(() => document.addEventListener("click", closeOnOutsideClick), 0);
+    setTimeout(
+      () => document.addEventListener("click", closeOnOutsideClick),
+      0,
+    );
   }
 
   _renderDatePickerBody() {
@@ -203,7 +226,8 @@ export class SheetController {
     const leadingBlanks = firstDay.weekdayIndex;
     const days = [];
     for (let i = 0; i < leadingBlanks; i += 1) days.push(null);
-    for (let d = 1; d <= monthLength; d += 1) days.push(new JalaliDate(jy, jm, d));
+    for (let d = 1; d <= monthLength; d += 1)
+      days.push(new JalaliDate(jy, jm, d));
     while (days.length % 7 !== 0) days.push(null);
     const weekdayShort = JalaliDate.weekdayShort();
 
@@ -218,7 +242,8 @@ export class SheetController {
         ${days
           .map((d) => {
             if (!d) return `<div class="date-picker-day is-empty"></div>`;
-            const isSelected = this._pickerSelectedDate && d.isSameDay(this._pickerSelectedDate);
+            const isSelected =
+              this._pickerSelectedDate && d.isSameDay(this._pickerSelectedDate);
             const isToday = d.isToday();
             return `<div class="date-picker-day ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}" data-jy="${d.jy}" data-jm="${d.jm}" data-jd="${d.jd}">${d.jd}</div>`;
           })
@@ -234,24 +259,35 @@ export class SheetController {
     popover.querySelector("#dp-prev").addEventListener("click", (e) => {
       e.stopPropagation();
       const { jy, jm } = this._pickerViewDate;
-      this._pickerViewDate = jm === 1 ? new JalaliDate(jy - 1, 12, 1) : new JalaliDate(jy, jm - 1, 1);
+      this._pickerViewDate =
+        jm === 1
+          ? new JalaliDate(jy - 1, 12, 1)
+          : new JalaliDate(jy, jm - 1, 1);
       popover.innerHTML = this._renderDatePickerBody();
       this._bindDatePickerBody(popover);
     });
     popover.querySelector("#dp-next").addEventListener("click", (e) => {
       e.stopPropagation();
       const { jy, jm } = this._pickerViewDate;
-      this._pickerViewDate = jm === 12 ? new JalaliDate(jy + 1, 1, 1) : new JalaliDate(jy, jm + 1, 1);
+      this._pickerViewDate =
+        jm === 12
+          ? new JalaliDate(jy + 1, 1, 1)
+          : new JalaliDate(jy, jm + 1, 1);
       popover.innerHTML = this._renderDatePickerBody();
       this._bindDatePickerBody(popover);
     });
     popover.querySelectorAll(".date-picker-day[data-jy]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const selected = new JalaliDate(Number(el.dataset.jy), Number(el.dataset.jm), Number(el.dataset.jd));
+        const selected = new JalaliDate(
+          Number(el.dataset.jy),
+          Number(el.dataset.jm),
+          Number(el.dataset.jd),
+        );
         this._pickerSelectedDate = selected;
         this.overlay.querySelector("#f-date").value = selected.format();
-        this.overlay.querySelector("#f-date-display").textContent = selected.formatLong();
+        this.overlay.querySelector("#f-date-display").textContent =
+          selected.formatLong();
         popover.remove();
       });
     });
@@ -260,14 +296,16 @@ export class SheetController {
       const today = JalaliDate.today();
       this._pickerSelectedDate = today;
       this.overlay.querySelector("#f-date").value = today.format();
-      this.overlay.querySelector("#f-date-display").textContent = today.formatLong();
+      this.overlay.querySelector("#f-date-display").textContent =
+        today.formatLong();
       popover.remove();
     });
     popover.querySelector("#dp-clear").addEventListener("click", (e) => {
       e.stopPropagation();
       this._pickerSelectedDate = null;
       this.overlay.querySelector("#f-date").value = "";
-      this.overlay.querySelector("#f-date-display").textContent = "انتخاب تاریخ";
+      this.overlay.querySelector("#f-date-display").textContent =
+        "انتخاب تاریخ";
       popover.remove();
     });
   }
@@ -278,7 +316,9 @@ export class SheetController {
     if (!group || !hiddenInput) return;
     group.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => {
-        group.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        group
+          .querySelectorAll("button")
+          .forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         hiddenInput.value = btn.dataset[datasetKey];
       });
@@ -301,11 +341,24 @@ export class SheetController {
     if (dateStr) {
       const parts = dateStr.split("/").map((p) => Number(p.trim()));
       if (parts.length === 3 && !parts.some(Number.isNaN)) {
-        dueDateISO = new JalaliDate(parts[0], parts[1], parts[2]).toDate().toISOString();
+        dueDateISO = new JalaliDate(
+          parts[0],
+          parts[1],
+          parts[2],
+        ).toISOStringSafe();
       }
     }
 
-    const payload = { title, notes, listId, dueDateISO, dueTime, priority, repeat, reminderMinutesBefore };
+    const payload = {
+      title,
+      notes,
+      listId,
+      dueDateISO,
+      dueTime,
+      priority,
+      repeat,
+      reminderMinutesBefore,
+    };
 
     if (existing) {
       taskController.updateTask(existing.id, payload);
@@ -334,7 +387,9 @@ export class SheetController {
         <button class="btn btn--primary btn--block" id="list-save">افزودن لیست</button>
       </div>`;
     this.overlay.classList.add("active");
-    this.overlay.querySelector("#sheet-close").addEventListener("click", () => this.close());
+    this.overlay
+      .querySelector("#sheet-close")
+      .addEventListener("click", () => this.close());
     this.overlay.querySelector("#list-save").addEventListener("click", () => {
       const name = this.overlay.querySelector("#list-name").value.trim();
       const color = this.overlay.querySelector("#list-color").value;

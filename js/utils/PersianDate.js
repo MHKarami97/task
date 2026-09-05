@@ -63,7 +63,9 @@ const PersianDate = (() => {
 
   function j2d(jy, jm, jd) {
     const r = jalCal(jy);
-    return g2d(jy + 621, 3, r.march) + (jm - 1) * 31 - div(jm, 7) * (jm - 7) + jd - 1;
+    return (
+      g2d(jy + 621, 3, r.march) + (jm - 1) * 31 - div(jm, 7) * (jm - 7) + jd - 1
+    );
   }
 
   function d2j(jdn) {
@@ -113,10 +115,28 @@ const PersianDate = (() => {
   }
 
   const MONTH_NAMES = [
-    "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
-    "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
+    "فروردین",
+    "اردیبهشت",
+    "خرداد",
+    "تیر",
+    "مرداد",
+    "شهریور",
+    "مهر",
+    "آبان",
+    "آذر",
+    "دی",
+    "بهمن",
+    "اسفند",
   ];
-  const WEEKDAY_NAMES = ["شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+  const WEEKDAY_NAMES = [
+    "شنبه",
+    "یک‌شنبه",
+    "دوشنبه",
+    "سه‌شنبه",
+    "چهارشنبه",
+    "پنج‌شنبه",
+    "جمعه",
+  ];
   const WEEKDAY_SHORT = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
 
   class JalaliDate {
@@ -127,7 +147,11 @@ const PersianDate = (() => {
     }
 
     static fromDate(date) {
-      const { jy, jm, jd } = toJalali(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      const { jy, jm, jd } = toJalali(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate(),
+      );
       return new JalaliDate(jy, jm, jd);
     }
 
@@ -150,6 +174,11 @@ const PersianDate = (() => {
       const d = this.toDate();
       const pad = (n) => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    toISOStringSafe() {
+      const { gy, gm, gd } = toGregorian(this.jy, this.jm, this.jd);
+      return new Date(Date.UTC(gy, gm - 1, gd, 12, 0, 0)).toISOString();
     }
 
     get monthName() {
@@ -178,7 +207,12 @@ const PersianDate = (() => {
     }
 
     isSameDay(other) {
-      return !!other && this.jy === other.jy && this.jm === other.jm && this.jd === other.jd;
+      return (
+        !!other &&
+        this.jy === other.jy &&
+        this.jm === other.jm &&
+        this.jd === other.jd
+      );
     }
 
     isToday() {

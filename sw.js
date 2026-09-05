@@ -1,4 +1,4 @@
-const CACHE_NAME = "task-v1.0.6";
+const CACHE_NAME = "task-v1.0.7";
 const OFFLINE_PAGE = "/offline.html";
 
 const urlsToCache = [

@@ -57,6 +57,22 @@
 <div class="overlay" id="sheet-overlay"></div>
 <div class="toast" id="toast"></div>
 
+<!-- Update notification banner -->
+<div id="updateNotification" class="card" style="display:none; margin: 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong>نسخه جدید آماده است</strong>
+      <div style="font-size: 0.85rem; color: #666;">
+        برای اعمال به‌روزرسانی، برنامه را راه‌اندازی مجدد کنید.
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button id="dismissUpdate" class="btn btn--outline" style="padding: 6px 10px;">بعداً</button>
+      <button id="updateButton" class="btn btn--primary" style="padding: 6px 10px;">راه‌اندازی مجدد</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>

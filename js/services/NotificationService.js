@@ -53,7 +53,7 @@ export class NotificationService {
     }
 
     const fireAt = this.computeFireAt(task);
-    if (fireAt === null) return; // dueTime خالی بود، چیزی زمان‌بندی نمی‌شود
+    if (fireAt === null) return;
 
     const delay = fireAt - Date.now();
     if (delay > 0) {
@@ -63,17 +63,15 @@ export class NotificationService {
       this.fire(task);
     }
 
-    // فقط subscribe/upsert — بدون unsubscribe همزمان، بدون race.
     if (isInstalledApp) {
       void pushSubscriptionService.syncReminder(
         task.id,
         new Date(fireAt).toISOString(),
+        task.title
       );
     }
   }
 
-  // این تابع همان‌جایی است که واقعاً باید از سرور هم حذف شود:
-  // deleteTask, toggleComplete(true), یا وقتی dueDate/reminder برداشته می‌شود.
   cancelReminder(taskId) {
     this._clearLocalTimer(taskId);
     if (isInstalledApp) {

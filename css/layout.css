@@ -4,24 +4,35 @@
   min-height: 100vh;
 }
 
-/* Mobile top bar — holds title + theme toggle, hidden on desktop (moved into sidebar) */
 .mobile-topbar {
   position: sticky;
   top: 0;
   z-index: 20;
-  height: var(--topbar-height);
+  height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+  min-height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
   padding: 0 var(--space-4);
-  padding-top: env(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--surface-1);
   box-shadow: var(--shadow-medium);
+  overflow: hidden;
 }
 
 .mobile-topbar__title {
   font-size: 1.05rem;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.mobile-topbar .theme-toggle {
+  flex-shrink: 0;
 }
 
 .main-content {

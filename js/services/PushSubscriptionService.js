@@ -2,7 +2,7 @@ import { PUSH_CONFIG } from "../config.js";
 
 export function isInstalledApp() {
   const isStandaloneDisplay = ["fullscreen", "standalone", "minimal-ui"].some(
-    (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
+    (mode) => window.matchMedia(`(display-mode: ${mode})`).matches,
   );
   const isIosHomeScreen = window.navigator.standalone === true;
   const isAndroidTwa = document.referrer.startsWith("android-app://");
@@ -21,7 +21,9 @@ class PushSubscriptionService {
 
   _urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
     const rawData = window.atob(base64);
     const output = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i);
@@ -34,7 +36,9 @@ class PushSubscriptionService {
     if (existing) return existing;
     return registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: this._urlBase64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
+      applicationServerKey: this._urlBase64ToUint8Array(
+        PUSH_CONFIG.vapidPublicKey,
+      ),
     });
   }
 
@@ -44,10 +48,9 @@ class PushSubscriptionService {
     return registration.pushManager.getSubscription();
   }
 
-  async syncReminder(taskId, remindAtIso) {
+  async syncReminder(taskId, remindAtIso, taskTitle) {
     if (!this.isSupported()) return;
     if (Notification.permission !== "granted") return;
-
     try {
       const subscription = await this._getOrCreateSubscription();
       await fetch(`${PUSH_CONFIG.apiBaseUrl}/api/reminders/subscribe`, {
@@ -56,11 +59,12 @@ class PushSubscriptionService {
         body: JSON.stringify({
           subscription: subscription.toJSON(),
           taskId,
+          taskTitle,
           remindAtIso,
         }),
       });
     } catch (err) {
-      console.error("[PushSubscriptionService] syncReminder failed", err);
+      console.error("PushSubscriptionService syncReminder failed", err);
     }
   }
 

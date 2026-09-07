@@ -43,7 +43,6 @@ export class AboutView {
           <p class="text-secondary" style="margin-bottom:12px">
             ✓ اعلان فعال است — یادآورهای شما حتی وقتی برنامه بسته باشد ارسال می‌شوند.
           </p>
-          <button class="btn btn--secondary btn--block" id="notif-disable-btn">غیرفعال کردن</button>
         </div>`;
     }
     if (state === "inactive") {

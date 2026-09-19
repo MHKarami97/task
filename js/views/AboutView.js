@@ -1,10 +1,12 @@
 import { taskController } from "../controllers/TaskController.js";
 import { notificationService } from "../services/NotificationService.js";
 import { isInstalledApp, pushSubscriptionService } from "../services/PushSubscriptionService.js";
+import { telegramLinkService } from "../services/TelegramLinkService.js";
 
 export class AboutView {
   #renderSeq = 0;
   #actionInFlight = false;
+  #telegramPollTimer = null;
 
   constructor(rootEl) {
     this.root = rootEl;
@@ -16,6 +18,20 @@ export class AboutView {
     if (Notification.permission === "default") return "default";
     var subscription = await pushSubscriptionService.getActiveSubscription();
     return subscription ? "active" : "inactive";
+  }
+
+  /**
+   * وضعیت اتصال تلگرام را برمی‌گرداند:
+   * - "unconfigured": botUsername در config.js هنوز تنظیم نشده
+   * - "disabled": کاربر هنوز سوییچ تلگرام را فعال نکرده
+   * - "pending": لینک ساخته شده ولی کاربر هنوز /start نزده
+   * - "linked": اتصال کامل و برقرار است
+   */
+  async _getTelegramState() {
+    if (!telegramLinkService.isConfigured()) return "unconfigured";
+    if (!telegramLinkService.isEnabled()) return "disabled";
+    var status = await telegramLinkService.getLinkStatus();
+    return status.linked ? "linked" : "pending";
   }
 
   _notificationCardHTML(state) {
@@ -73,7 +89,59 @@ export class AboutView {
     return `<div class="card about-section" id="notif-card-slot"></div>`;
   }
 
-  _shellHTML(stats, notificationCardHTML) {
+  /** کارت تنظیمات یادآور تلگرام — هم‌سبک با _notificationCardHTML بالا. */
+  _telegramCardHTML(state) {
+    if (state === "loading") {
+      return `
+        <div class="card about-section" id="telegram-card-slot">
+          <h3>یادآور تلگرام</h3>
+          <p class="text-secondary" style="margin-bottom:0">در حال بررسی وضعیت اتصال...</p>
+        </div>`;
+    }
+    if (state === "unconfigured") {
+      return `
+        <div class="card about-section" id="telegram-card-slot">
+          <h3>یادآور تلگرام</h3>
+          <p class="text-secondary" style="margin-bottom:0; font-size:0.8rem">
+            نام‌کاربری بات هنوز در config.js تنظیم نشده است.
+          </p>
+        </div>`;
+    }
+    if (state === "disabled") {
+      return `
+        <div class="card about-section" id="telegram-card-slot">
+          <h3>یادآور تلگرام</h3>
+          <p class="text-secondary" style="margin-bottom:12px">
+            علاوه بر اعلان مرورگر، یادآور وظایف را در تلگرام هم دریافت کنید.
+          </p>
+          <button class="btn btn--primary btn--block" id="telegram-link-btn">اتصال به تلگرام</button>
+        </div>`;
+    }
+    if (state === "pending") {
+      return `
+        <div class="card about-section" id="telegram-card-slot">
+          <h3>یادآور تلگرام</h3>
+          <p class="text-secondary" style="margin-bottom:12px">
+            ربات را در تلگرام باز کرده و روی Start بزنید؛ این صفحه به‌محض
+            اتصال به‌صورت خودکار به‌روزرسانی می‌شود.
+          </p>
+          <a class="btn btn--secondary btn--block" href="${telegramLinkService.getDeepLink()}"
+             target="_blank" rel="noopener" id="telegram-open-bot-link">باز کردن بات در تلگرام</a>
+          <button class="btn btn--outline btn--block" style="margin-top:10px" id="telegram-cancel-btn">انصراف</button>
+        </div>`;
+    }
+    // state === "linked"
+    return `
+      <div class="card about-section" id="telegram-card-slot">
+        <h3>یادآور تلگرام</h3>
+        <p class="text-secondary" style="margin-bottom:12px">
+          ✓ اتصال برقرار است — یادآورهای وظایف از این پس در تلگرام هم ارسال می‌شود.
+        </p>
+        <button class="btn btn--danger btn--block" id="telegram-unlink-btn">قطع اتصال تلگرام</button>
+      </div>`;
+  }
+
+  _shellHTML(stats, notificationCardHTML, telegramCardHTML) {
     return `
       <div class="about-hero">
         <div class="about-avatar">MHK</div>
@@ -85,6 +153,8 @@ export class AboutView {
       </div>
 
       ${notificationCardHTML}
+
+      ${telegramCardHTML}
 
       <div class="card about-section">
         <h3>آمار</h3>
@@ -107,26 +177,39 @@ export class AboutView {
   }
 
   /**
-   * Renders the shell synchronously (with a loading placeholder for the
-   * notification card), then patches only the notification card once its
-   * async state resolves. `seq` is used to discard the async result if a
-   * newer render() call has since started — this prevents two overlapping
-   * renders from clobbering each other's DOM.
+   * Renders the shell synchronously (with loading placeholders for the
+   * notification and telegram cards), then patches each card independently
+   * once its own async state resolves. `seq` is used to discard async
+   * results if a newer render() call has since started — this prevents
+   * overlapping renders from clobbering each other's DOM.
    */
   async render() {
     var seq = ++this.#renderSeq;
     var stats = taskController.getStats();
 
-    this.root.innerHTML = this._shellHTML(stats, this._notificationCardHTML("loading"));
+    this.root.innerHTML = this._shellHTML(
+      stats,
+      this._notificationCardHTML("loading"),
+      this._telegramCardHTML("loading")
+    );
     this._bindStaticEvents();
 
     var notificationState = await this._getNotificationState();
     if (seq !== this.#renderSeq) return; // a newer render superseded this one
 
-    var slot = this.root.querySelector("#notif-card-slot");
-    if (slot) {
-      slot.outerHTML = this._notificationCardHTML(notificationState);
+    var notifSlot = this.root.querySelector("#notif-card-slot");
+    if (notifSlot) {
+      notifSlot.outerHTML = this._notificationCardHTML(notificationState);
       this._bindNotificationEvents();
+    }
+
+    var telegramState = await this._getTelegramState();
+    if (seq !== this.#renderSeq) return; // a newer render superseded this one
+
+    var telegramSlot = this.root.querySelector("#telegram-card-slot");
+    if (telegramSlot) {
+      telegramSlot.outerHTML = this._telegramCardHTML(telegramState);
+      this._bindTelegramEvents(telegramState);
     }
   }
 
@@ -171,6 +254,52 @@ export class AboutView {
     document.getElementById("notif-recheck-btn")?.addEventListener("click", (e) => {
       this._runExclusive(e.currentTarget, "در حال بررسی...", () => Promise.resolve());
     });
+  }
+
+  /** رویدادهای کارت تلگرام — شامل شروع/توقف Poll کردن وضعیت اتصال. */
+  _bindTelegramEvents(state) {
+    document.getElementById("telegram-link-btn")?.addEventListener("click", () => {
+      telegramLinkService.getOrCreateLinkCode();
+      telegramLinkService.setEnabled(true);
+      this.render();
+    });
+
+    document.getElementById("telegram-cancel-btn")?.addEventListener("click", () => {
+      telegramLinkService.setEnabled(false);
+      this._stopTelegramPolling();
+      this.render();
+    });
+
+    document.getElementById("telegram-unlink-btn")?.addEventListener("click", (e) => {
+      this._runExclusive(e.currentTarget, "در حال قطع اتصال...", () =>
+        telegramLinkService.unlink()
+      );
+    });
+
+    if (state === "pending") {
+      this._startTelegramPolling();
+    } else {
+      this._stopTelegramPolling();
+    }
+  }
+
+  /** هر ۳ ثانیه وضعیت اتصال را چک می‌کند تا وقتی کاربر در تلگرام Start بزند. */
+  _startTelegramPolling() {
+    if (this.#telegramPollTimer) return;
+    this.#telegramPollTimer = setInterval(async () => {
+      var status = await telegramLinkService.getLinkStatus();
+      if (status.linked) {
+        this._stopTelegramPolling();
+        this.render();
+      }
+    }, 3000);
+  }
+
+  _stopTelegramPolling() {
+    if (this.#telegramPollTimer) {
+      clearInterval(this.#telegramPollTimer);
+      this.#telegramPollTimer = null;
+    }
   }
 
   /**

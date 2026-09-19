@@ -1,7 +1,5 @@
-import {
-  pushSubscriptionService,
-  isInstalledApp,
-} from "./PushSubscriptionService.js";
+import { pushSubscriptionService, isInstalledApp } from "./PushSubscriptionService.js";
+import { telegramLinkService } from "./TelegramLinkService.js";
 
 const GRACE_WINDOW_MS = 10 * 60 * 1000;
 
@@ -14,7 +12,7 @@ export class NotificationService {
     if (!("Notification" in window)) return "unsupported";
     if (Notification.permission !== "default") return Notification.permission;
     const permission = await Notification.requestPermission();
-    if (permission === "granted" && isInstalledApp) {
+    if (permission === "granted" && isInstalledApp()) {
       await pushSubscriptionService.enable();
     }
     return permission;
@@ -22,9 +20,7 @@ export class NotificationService {
 
   computeFireAt(task) {
     if (!task.dueTime) {
-      console.warn(
-        `[NotificationService] task ${task.id} has no dueTime — reminder skipped`,
-      );
+      console.warn(`NotificationService: task ${task.id} has no dueTime; reminder skipped`);
       return null;
     }
     const dueMoment = new Date(task.dueDateISO);
@@ -33,21 +29,17 @@ export class NotificationService {
     return dueMoment.getTime() - task.reminderMinutesBefore * 60 * 1000;
   }
 
-  // فقط تایمر محلی را پاک می‌کند؛ هیچ تماسی با سرور ندارد.
-  _clearLocalTimer(taskId) {
+  clearLocalTimer(taskId) {
     const timerId = this.timers.get(taskId);
     if (timerId) clearTimeout(timerId);
     this.timers.delete(taskId);
   }
 
   scheduleReminder(task) {
-    this._clearLocalTimer(task.id);
+    this.clearLocalTimer(task.id);
 
-    const hasValidReminder =
-      task.dueDateISO && task.reminderMinutesBefore !== null && !task.completed;
-
+    const hasValidReminder = task.dueDateISO && task.reminderMinutesBefore !== null && !task.completed;
     if (!hasValidReminder) {
-      // دیگر یادآوری معتبری وجود ندارد؛ این‌جا واقعاً باید از سرور هم حذف شود.
       this.cancelReminder(task.id);
       return;
     }
@@ -63,20 +55,21 @@ export class NotificationService {
       this.fire(task);
     }
 
-    if (isInstalledApp) {
-      void pushSubscriptionService.syncReminder(
-        task.id,
-        new Date(fireAt).toISOString(),
-        task.title
-      );
+    const remindAtIso = new Date(fireAt).toISOString();
+    if (isInstalledApp()) {
+      void pushSubscriptionService.syncReminder(task.id, remindAtIso, task.title);
     }
+    // همگام‌سازی موازی با تلگرام — بدون نیاز به نصب اپ به‌صورت PWA، چون
+    // ارسال از سمت سرور (Durable Object) انجام می‌شود، نه از مرورگر.
+    void telegramLinkService.syncReminder(task.id, remindAtIso, task.title);
   }
 
   cancelReminder(taskId) {
-    this._clearLocalTimer(taskId);
-    if (isInstalledApp) {
+    this.clearLocalTimer(taskId);
+    if (isInstalledApp()) {
       void pushSubscriptionService.cancelReminder(taskId);
     }
+    void telegramLinkService.cancelReminder(taskId);
   }
 
   fire(task) {

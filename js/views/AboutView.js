@@ -2,6 +2,7 @@ import { taskController } from "../controllers/TaskController.js";
 import { notificationService } from "../services/NotificationService.js";
 import { isInstalledApp, pushSubscriptionService } from "../services/PushSubscriptionService.js";
 import { telegramLinkService } from "../services/TelegramLinkService.js";
+import { TELEGRAM_CONFIG } from "../config.js";
 
 export class AboutView {
   #renderSeq = 0;
@@ -31,7 +32,7 @@ export class AboutView {
     if (!telegramLinkService.isConfigured()) return "unconfigured";
     if (!telegramLinkService.isEnabled()) return "disabled";
     var status = await telegramLinkService.getLinkStatus();
-    return status.linked ? "linked" : "pending";
+    return status.linked ? { status: "linked", username: status.username } : { status: "pending" };
   }
 
   _notificationCardHTML(state) {
@@ -89,7 +90,11 @@ export class AboutView {
     return `<div class="card about-section" id="notif-card-slot"></div>`;
   }
 
-  /** کارت تنظیمات یادآور تلگرام — هم‌سبک با _notificationCardHTML بالا. */
+  /**
+   * کارت تنظیمات یادآور تلگرام.
+   * state یکی از این مقادیر است: "loading" | "unconfigured" | "disabled"
+   * یا یک شیء { status: "pending" } | { status: "linked", username }
+   */
   _telegramCardHTML(state) {
     if (state === "loading") {
       return `
@@ -98,46 +103,100 @@ export class AboutView {
           <p class="text-secondary" style="margin-bottom:0">در حال بررسی وضعیت اتصال...</p>
         </div>`;
     }
+
     if (state === "unconfigured") {
       return `
         <div class="card about-section" id="telegram-card-slot">
           <h3>یادآور تلگرام</h3>
           <p class="text-secondary" style="margin-bottom:0; font-size:0.8rem">
-            نام‌کاربری بات هنوز در config.js تنظیم نشده است.
+            این قابلیت هنوز روی سرور پیکربندی نشده است.
           </p>
         </div>`;
     }
+
     if (state === "disabled") {
       return `
         <div class="card about-section" id="telegram-card-slot">
           <h3>یادآور تلگرام</h3>
-          <p class="text-secondary" style="margin-bottom:12px">
-            علاوه بر اعلان مرورگر، یادآور وظایف را در تلگرام هم دریافت کنید.
+          <p class="text-secondary" style="margin-bottom:8px">
+            علاوه بر اعلان مرورگر، یادآور وظایف را به‌صورت پیام در تلگرام هم
+            دریافت کنید — حتی روی گوشی یا کامپیوتری که این اپ روی آن نصب نیست.
+          </p>
+          <p class="text-secondary" style="margin-bottom:12px; font-size:0.78rem">
+            ربات تلگرام: <b dir="ltr">@${this._esc(TELEGRAM_CONFIG.botUsername)}</b>
           </p>
           <button class="btn btn--primary btn--block" id="telegram-link-btn">اتصال به تلگرام</button>
         </div>`;
     }
-    if (state === "pending") {
+
+    if (state.status === "pending") {
+      var deepLink = telegramLinkService.getDeepLink();
       return `
         <div class="card about-section" id="telegram-card-slot">
           <h3>یادآور تلگرام</h3>
-          <p class="text-secondary" style="margin-bottom:12px">
-            ربات را در تلگرام باز کرده و روی Start بزنید؛ این صفحه به‌محض
-            اتصال به‌صورت خودکار به‌روزرسانی می‌شود.
+
+          <p class="text-secondary" style="margin-bottom:6px">
+            <b>مرحله ۱:</b> روی دکمه‌ی «باز کردن بات در تلگرام» بزنید، یا اگر
+            روی همین دستگاه باز نشد، لینک یا نام‌کاربری زیر را کپی کرده و در
+            اپلیکیشن تلگرام (روی موبایل یا دسکتاپ) جست‌وجو/باز کنید.
           </p>
-          <a class="btn btn--secondary btn--block" href="${telegramLinkService.getDeepLink()}"
+          <p class="text-secondary" style="margin-bottom:6px">
+            <b>مرحله ۲:</b> در صفحه‌ی بات، روی دکمه‌ی آبی‌رنگ <b>Start</b> بزنید
+            (یا خودتان پیام <code dir="ltr">/start</code> را بفرستید). بات
+            بلافاصله پیام «اتصال با موفقیت انجام شد» را برایتان می‌فرستد.
+          </p>
+          <p class="text-secondary" style="margin-bottom:16px">
+            <b>مرحله ۳:</b> به همین صفحه برگردید و صبر کنید؛ وضعیت به‌صورت
+            خودکار (بدون نیاز به رفرش) به «متصل» تغییر می‌کند.
+          </p>
+
+          <div class="field">
+            <label class="field__label">نام‌کاربری بات</label>
+            <div style="display:flex; gap:8px;">
+              <input class="field__input" id="telegram-bot-username" type="text"
+                     value="@${this._esc(TELEGRAM_CONFIG.botUsername)}" readonly style="flex:1; direction:ltr; text-align:left" />
+              <button class="btn btn--secondary" id="telegram-copy-username-btn" type="button">کپی</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">لینک اتصال مستقیم</label>
+            <div style="display:flex; gap:8px;">
+              <input class="field__input" id="telegram-deep-link" type="text"
+                     value="${this._esc(deepLink)}" readonly style="flex:1; direction:ltr; text-align:left; font-size:0.75rem" />
+              <button class="btn btn--secondary" id="telegram-copy-link-btn" type="button">کپی لینک</button>
+            </div>
+            <p class="field__hint">این لینک مخصوص همین دستگاه شماست؛ آن را برای کسی نفرستید.</p>
+          </div>
+
+          <a class="btn btn--primary btn--block" href="${this._esc(deepLink)}"
              target="_blank" rel="noopener" id="telegram-open-bot-link">باز کردن بات در تلگرام</a>
-          <button class="btn btn--outline btn--block" style="margin-top:10px" id="telegram-cancel-btn">انصراف</button>
+          <button class="btn btn--outline btn--block" style="margin-top:10px" id="telegram-cancel-btn" type="button">انصراف</button>
+
+          <p class="field__hint" style="margin-top:12px">
+            داخل بات هم می‌توانید از دستورهای <code dir="ltr">/status</code>
+            (وضعیت اتصال)، <code dir="ltr">/list</code> (یادآورهای در انتظار)
+            و <code dir="ltr">/help</code> (راهنما) استفاده کنید.
+          </p>
         </div>`;
     }
-    // state === "linked"
+
+    // state.status === "linked"
+    var usernameLine = state.username
+      ? `<code dir="ltr">@${this._esc(state.username)}</code>`
+      : "بدون نام‌کاربری تلگرام";
     return `
       <div class="card about-section" id="telegram-card-slot">
         <h3>یادآور تلگرام</h3>
         <p class="text-secondary" style="margin-bottom:12px">
-          ✓ اتصال برقرار است — یادآورهای وظایف از این پس در تلگرام هم ارسال می‌شود.
+          ✓ اتصال برقرار است (${usernameLine}) — یادآورهای وظایف از این پس در
+          تلگرام هم ارسال می‌شود.
         </p>
-        <button class="btn btn--danger btn--block" id="telegram-unlink-btn">قطع اتصال تلگرام</button>
+        <p class="field__hint" style="margin-bottom:12px">
+          برای دیدن یادآورهای در انتظار، در بات دستور
+          <code dir="ltr">/list</code> را بفرستید.
+        </p>
+        <button class="btn btn--danger btn--block" id="telegram-unlink-btn" type="button">قطع اتصال تلگرام</button>
       </div>`;
   }
 
@@ -256,7 +315,7 @@ export class AboutView {
     });
   }
 
-  /** رویدادهای کارت تلگرام — شامل شروع/توقف Poll کردن وضعیت اتصال. */
+  /** رویدادهای کارت تلگرام — شامل کپی‌کردن، شروع/توقف Poll و قطع اتصال. */
   _bindTelegramEvents(state) {
     document.getElementById("telegram-link-btn")?.addEventListener("click", () => {
       telegramLinkService.getOrCreateLinkCode();
@@ -276,7 +335,21 @@ export class AboutView {
       );
     });
 
-    if (state === "pending") {
+    var copyLinkBtn = document.getElementById("telegram-copy-link-btn");
+    copyLinkBtn?.addEventListener("click", () => {
+      var input = document.getElementById("telegram-deep-link");
+      this._copyToClipboard(input?.value ?? "");
+      this._flashCopied(copyLinkBtn);
+    });
+
+    var copyUsernameBtn = document.getElementById("telegram-copy-username-btn");
+    copyUsernameBtn?.addEventListener("click", () => {
+      var input = document.getElementById("telegram-bot-username");
+      this._copyToClipboard(input?.value ?? "");
+      this._flashCopied(copyUsernameBtn);
+    });
+
+    if (typeof state === "object" && state?.status === "pending") {
       this._startTelegramPolling();
     } else {
       this._stopTelegramPolling();
@@ -300,6 +373,56 @@ export class AboutView {
       clearInterval(this.#telegramPollTimer);
       this.#telegramPollTimer = null;
     }
+  }
+
+  /**
+   * متن را در کلیپ‌بورد کپی می‌کند. اول از Clipboard API استفاده می‌کند (نیاز
+   * به context امن دارد، که چون سایت روی HTTPS است معمولاً کار می‌کند) و در
+   * صورت شکست، به روش قدیمی‌تر select+execCommand بازمی‌گردد.
+   */
+  async _copyToClipboard(text) {
+    if (!text) return false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (err) {
+      console.error("[AboutView] clipboard API failed, falling back", err);
+    }
+    try {
+      var tempInput = document.createElement("textarea");
+      tempInput.value = text;
+      tempInput.style.position = "fixed";
+      tempInput.style.opacity = "0";
+      document.body.appendChild(tempInput);
+      tempInput.focus();
+      tempInput.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      return true;
+    } catch (err) {
+      console.error("[AboutView] fallback copy failed", err);
+      return false;
+    }
+  }
+
+  /** برچسب دکمه‌ی کپی را موقتاً به «کپی شد!» تغییر می‌دهد. */
+  _flashCopied(buttonEl) {
+    if (!buttonEl) return;
+    var originalLabel = buttonEl.textContent;
+    buttonEl.textContent = "کپی شد!";
+    buttonEl.disabled = true;
+    setTimeout(() => {
+      buttonEl.textContent = originalLabel;
+      buttonEl.disabled = false;
+    }, 1500);
+  }
+
+  _esc(str) {
+    var div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
   }
 
   /**

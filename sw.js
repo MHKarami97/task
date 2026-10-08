@@ -1,6 +1,6 @@
 class ServiceWorkerManager {
   constructor() {
-    this.CACHE_VERSION = "1.1.2";
+    this.CACHE_VERSION = "1.1.3";
     this.CACHE_NAME = `task-v${this.CACHE_VERSION}`;
     this.OFFLINE_PAGE = "/offline.html";
 
@@ -9,16 +9,6 @@ class ServiceWorkerManager {
       "./index.html",
       this.OFFLINE_PAGE,
       "./manifest.json",
-      "./css/variables.css",
-      "./css/base.css",
-      "./css/layout.css",
-      "./css/components.css",
-      "./css/responsive.css",
-      "./assets/icons/favicon-192.png",
-      "./assets/icons/favicon-512.png",
-      "/assets/fonts/Vazirmatn-font-face.css",
-      "/assets/fonts/webfonts/Vazirmatn-Regular.woff2",
-      "/assets/fonts/webfonts/Vazirmatn-Bold.woff2",
     ];
 
     this._bindEvents();

@@ -1,6 +1,6 @@
 /**
  * PersianDate - self-contained Jalali (Solar Hijri) calendar utility.
- * Conversion algorithm ported from jalaali-js (MIT) https://github.com/jalaali/jalaali-js
+ * Conversion algorithm ported from jalaali-js (MIT): https://github.com/jalaali/jalaali-js
  * Valid for Jalali years -61..3177.
  */
 const PersianDate = (() => {
@@ -52,8 +52,7 @@ const PersianDate = (() => {
     var d = div((gy + div(gm - 8, 6) + 100100) * 1461, 4)
       + div(153 * mod(gm + 9, 12) + 2, 5)
       + gd - 34840408;
-    d = d - div(div(gy + 100100 + div(gm - 8, 6), 100) * 3, 4) + 752;
-    return d;
+    return d - div(div(gy + 100100 + div(gm - 8, 6), 100) * 3, 4) + 752;
   }
 
   function d2g(jdn) {
@@ -177,7 +176,7 @@ const PersianDate = (() => {
       return !!other && this.jy === other.jy && this.jm === other.jm && this.jd === other.jd;
     }
 
-    get isToday() {
+    isToday() {
       return this.isSameDay(JalaliDate.today());
     }
 
@@ -187,13 +186,20 @@ const PersianDate = (() => {
       return JalaliDate.fromDate(d);
     }
 
-    static get monthNames() { return MONTH_NAMES; }
-    static get weekdayShort() { return WEEKDAY_SHORT; }
+    static monthNames() { return MONTH_NAMES; }
+    static weekdayShort() { return WEEKDAY_SHORT; }
     static monthLength(jy, jm) { return jalaliMonthLength(jy, jm); }
     static isLeapYear(jy) { return isLeapJalaliYear(jy); }
+
+    static get JalaliDate() { return JalaliDate; }
+    static toJalali(gy, gm, gd) { return toJalali(gy, gm, gd); }
+    static toGregorian(jy, jm, jd) { return toGregorian(jy, jm, jd); }
+    static isLeapJalaliYear(jy) { return isLeapJalaliYear(jy); }
+    static jalaliMonthLength(jy, jm) { return jalaliMonthLength(jy, jm); }
   }
 
   return JalaliDate;
 })();
 
+export const JalaliDate = PersianDate;
 export default PersianDate;

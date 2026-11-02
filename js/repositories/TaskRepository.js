@@ -60,6 +60,11 @@ export class TaskRepository {
     this._cache = this._load().filter((t) => !t.completed || (listId && t.listId !== listId));
     this._persist();
   }
+
+  replaceAll(tasks) {
+    this._cache = tasks.map((t) => (t instanceof Task ? t : Task.fromJSON(t)));
+    this._persist();
+  }
 }
 
 export const taskRepository = new TaskRepository();

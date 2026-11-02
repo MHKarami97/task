@@ -1,0 +1,246 @@
+/* ==========================================================================
+   Google Drive Cloud Sync Styles — persian-task-app
+   Matches Spotify dark/light design system
+   ========================================================================== */
+
+/* ---------- Floating Failure Bar ---------- */
+.sync-failure-bar {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 12px);
+  left: 16px;
+  right: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+  z-index: 990;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px 16px;
+  background: #d97706; /* warm amber */
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-heavy);
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: slideUp 250ms ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sync-failure-bar__text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sync-failure-bar__text span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-failure-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sync-failure-bar__retry {
+  background: #ffffff;
+  color: #92400e;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.sync-failure-bar__retry:active {
+  transform: scale(0.95);
+}
+
+.sync-failure-bar__close {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ---------- Cloud Conflict Modal ---------- */
+.cloud-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cloud-modal-content {
+  background: var(--surface-1);
+  color: var(--text-base);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-heavy);
+  border: 1px solid var(--border);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  display: flex;
+  flex-col;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cloud-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-3);
+}
+
+.cloud-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cloud-modal-header button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.cloud-stats-box {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cloud-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cloud-mode-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .cloud-mode-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cloud-mode-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.cloud-mode-label.active {
+  border-color: var(--color-accent);
+  background: rgba(30, 215, 96, 0.08);
+}
+
+/* ---------- Cloud Backup Card in AboutView ---------- */
+.cloud-card {
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.cloud-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cloud-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cloud-badge--success { background: rgba(30, 215, 96, 0.15); color: #1ed760; }
+.cloud-badge--syncing { background: rgba(83, 157, 245, 0.15); color: #539df5; }
+.cloud-badge--warning { background: rgba(255, 164, 43, 0.15); color: #ffa42b; }
+.cloud-badge--error { background: rgba(243, 114, 127, 0.15); color: #f3727f; }
+.cloud-badge--neutral { background: var(--surface-2); color: var(--text-secondary); }
+
+.cloud-info-panel {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--space-3) 0;
+}
+
+.cloud-crypto-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+}
+
+.cloud-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}

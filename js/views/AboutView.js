@@ -3,6 +3,7 @@ import { notificationService } from "../services/NotificationService.js";
 import { isInstalledApp, pushSubscriptionService } from "../services/PushSubscriptionService.js";
 import { telegramLinkService } from "../services/TelegramLinkService.js";
 import { TELEGRAM_CONFIG } from "../config.js";
+import { syncUIController } from "../cloud/SyncUIController.js";
 
 export class AboutView {
   #renderSeq = 0;
@@ -200,7 +201,7 @@ export class AboutView {
       </div>`;
   }
 
-  _shellHTML(stats, notificationCardHTML, telegramCardHTML) {
+  _shellHTML(stats, notificationCardHTML, telegramCardHTML, cloudCardHTML) {
     return `
       <div class="about-hero">
         <div class="about-avatar">MHK</div>
@@ -214,6 +215,8 @@ export class AboutView {
       ${notificationCardHTML}
 
       ${telegramCardHTML}
+
+      ${cloudCardHTML}
 
       <div class="card about-section">
         <h3>آمار</h3>
@@ -245,13 +248,16 @@ export class AboutView {
   async render() {
     var seq = ++this.#renderSeq;
     var stats = taskController.getStats();
+    var cloudCardHTML = syncUIController.getCardHTML();
 
     this.root.innerHTML = this._shellHTML(
       stats,
       this._notificationCardHTML("loading"),
-      this._telegramCardHTML("loading")
+      this._telegramCardHTML("loading"),
+      cloudCardHTML
     );
     this._bindStaticEvents();
+    syncUIController.bindCardEvents(this.root, () => this.render());
 
     var notificationState = await this._getNotificationState();
     if (seq !== this.#renderSeq) return; // a newer render superseded this one

@@ -54,6 +54,11 @@ export class ListRepository {
     this._cache = this._load().filter((l) => l.id !== id);
     this._persist();
   }
+
+  replaceAll(lists) {
+    this._cache = lists.map((l) => (l instanceof TaskList ? l : TaskList.fromJSON(l)));
+    this._persist();
+  }
 }
 
 export const listRepository = new ListRepository();

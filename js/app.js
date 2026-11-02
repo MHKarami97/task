@@ -4,6 +4,8 @@ import { CalendarView } from "./views/CalendarView.js";
 import { AboutView } from "./views/AboutView.js";
 import { SheetController } from "./controllers/SheetController.js";
 import { themeManager } from "./services/ThemeManager.js";
+import { cloudSyncService } from "./cloud/CloudSyncService.js";
+import { syncUIController } from "./cloud/SyncUIController.js";
 
 /**
  * Handles Service Worker registration, updates, and PWA install prompts.
@@ -215,6 +217,7 @@ class App {
 
   start() {
     this.router.start("tasks");
+    cloudSyncService.start();
   }
 }
 

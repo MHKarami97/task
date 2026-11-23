@@ -5,11 +5,17 @@ import PersianDate from "../utils/PersianDate.js";
 const { JalaliDate } = PersianDate;
 
 const ICON_CHECK =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 const ICON_STAR_FILLED =
-  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+const ICON_STAR_OUTLINE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 const ICON_EMPTY =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4M2 12l3.09 6.26L2 22l6.91-1.86L12 22M2 12a10 10 0 1 0 10-10"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m9 12 2 2 4-4"/></svg>';
+const ICON_CALENDAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+const ICON_SUBTASK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
 
 /**
  * TasksView — renders the primary Google-Tasks-like list UI.
@@ -84,22 +90,28 @@ export class TasksView {
     const j = JalaliDate.fromISO(task.dueDateISO);
     const overdue = task.isOverdue();
     const timeStr = task.dueTime ? ` ${task.dueTime}` : "";
-    return `<span class="task-item__due ${overdue ? "overdue" : ""}">${j.format("MM/DD")}${timeStr}</span>`;
+    return `<span class="task-item__due ${overdue ? "overdue" : ""}">${ICON_CALENDAR}<span>${j.format("MM/DD")}${timeStr}</span></span>`;
   }
 
   _taskItemHTML(task) {
+    const starIcon = task.starred ? ICON_STAR_FILLED : ICON_STAR_OUTLINE;
+    const starClass = task.starred ? "starred" : "";
+    const subtaskBadge = task.subtasks.length
+      ? `<span class="task-item__subtasks">${ICON_SUBTASK}<span>${task.subtasks.filter((s) => s.completed).length}/${task.subtasks.length}</span></span>`
+      : "";
+
     return `
       <li class="task-item ${task.completed ? "completed" : ""}" data-task-id="${task.id}">
-        <button class="task-item__checkbox" data-action="toggle">${ICON_CHECK}</button>
+        <button class="task-item__checkbox" data-action="toggle" aria-label="تغییر وضعیت">${ICON_CHECK}</button>
         <div class="task-item__body" data-action="open">
           <p class="task-item__title">${this._escape(task.title)}</p>
           <div class="task-item__meta">
-            <span class="priority-dot priority-dot--${task.priority}"></span>
+            <span class="priority-dot priority-dot--${task.priority}" title="اولویت"></span>
             ${this._formatDue(task)}
-            ${task.subtasks.length ? `<span>${task.subtasks.filter((s) => s.completed).length}/${task.subtasks.length}</span>` : ""}
+            ${subtaskBadge}
           </div>
         </div>
-        <button class="btn--icon" data-action="star" style="color:${task.starred ? "var(--color-warning)" : "var(--text-secondary)"}">${ICON_STAR_FILLED}</button>
+        <button class="btn--star ${starClass}" data-action="star" aria-label="نشان کردن">${starIcon}</button>
       </li>`;
   }
 
@@ -116,11 +128,11 @@ export class TasksView {
     this.root.innerHTML = `
       <div class="quick-add">
         <span class="quick-add__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </span>
         <input type="text" id="quick-add-input" placeholder="افزودن کار جدید..." />
         <button class="quick-add__submit" id="quick-add-btn" aria-label="افزودن کار">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
       </div>
       ${this._renderChips()}

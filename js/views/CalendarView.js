@@ -4,6 +4,15 @@ import PersianDate from "../utils/PersianDate.js";
 
 const { JalaliDate } = PersianDate;
 
+const ICON_CHEVRON_RIGHT =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const ICON_CHEVRON_LEFT =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+const ICON_CHECK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const ICON_EMPTY =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+
 /**
  * CalendarView — Jalali (Persian solar) month grid showing task indicators.
  * Selecting a day filters the task list below via callback injection.
@@ -40,9 +49,9 @@ export class CalendarView {
     this.root.innerHTML = `
       <div class="card">
         <div class="calendar-header">
-          <button class="btn--icon" id="cal-prev">‹</button>
+          <button class="btn--icon" id="cal-prev" aria-label="ماه قبل" title="ماه قبل">${ICON_CHEVRON_RIGHT}</button>
           <span class="calendar-header__title">${this.viewDate.monthName} ${this.viewDate.jy}</span>
-          <button class="btn--icon" id="cal-next">›</button>
+          <button class="btn--icon" id="cal-next" aria-label="ماه بعد" title="ماه بعد">${ICON_CHEVRON_LEFT}</button>
         </div>
         <div class="calendar-grid">
           ${weekdayShort.map((w) => `<div class="calendar-grid__weekday">${w}</div>`).join("")}
@@ -60,7 +69,7 @@ export class CalendarView {
             .join("")}
         </div>
       </div>
-      <div class="task-section" style="margin-top:16px;">
+      <div class="task-section" style="margin-top:20px;">
         <div class="task-section__header"><span class="task-section__title">${this.selectedDate.formatLong()}</span></div>
         <ul id="calendar-task-list">
           ${this._renderDayTasks()}
@@ -73,16 +82,19 @@ export class CalendarView {
   _renderDayTasks() {
     const tasks = taskController.getTasksByDate(this.selectedDate.toISODate());
     if (tasks.length === 0) {
-      return `<div class="empty-state"><p>کاری برای این روز ثبت نشده است</p></div>`;
+      return `<div class="empty-state">${ICON_EMPTY}<p>کاری برای این روز ثبت نشده است</p></div>`;
     }
     return tasks
       .map(
         (t) => `
       <li class="task-item ${t.completed ? "completed" : ""}" data-task-id="${t.id}">
-        <button class="task-item__checkbox" data-action="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></button>
+        <button class="task-item__checkbox" data-action="toggle" aria-label="تغییر وضعیت">${ICON_CHECK}</button>
         <div class="task-item__body">
           <p class="task-item__title">${t.title}</p>
-          <div class="task-item__meta"><span class="priority-dot priority-dot--${t.priority}"></span>${t.dueTime || ""}</div>
+          <div class="task-item__meta">
+            <span class="priority-dot priority-dot--${t.priority}"></span>
+            ${t.dueTime ? `<span class="task-item__due">${t.dueTime}</span>` : ""}
+          </div>
         </div>
       </li>`
       )

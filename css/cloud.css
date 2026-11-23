@@ -6,7 +6,7 @@
 /* ---------- Floating Failure Bar ---------- */
 .sync-failure-bar {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + 12px);
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
   left: 16px;
   right: 16px;
   max-width: 500px;
@@ -182,7 +182,7 @@
 
 .cloud-mode-label.active {
   border-color: var(--color-accent);
-  background: rgba(30, 215, 96, 0.08);
+  background: var(--color-accent-light);
 }
 
 /* ---------- Cloud Backup Card in AboutView ---------- */
@@ -209,10 +209,10 @@
   font-weight: 700;
 }
 
-.cloud-badge--success { background: rgba(30, 215, 96, 0.15); color: #1ed760; }
-.cloud-badge--syncing { background: rgba(83, 157, 245, 0.15); color: #539df5; }
-.cloud-badge--warning { background: rgba(255, 164, 43, 0.15); color: #ffa42b; }
-.cloud-badge--error { background: rgba(243, 114, 127, 0.15); color: #f3727f; }
+.cloud-badge--success { background: var(--color-accent-light); color: var(--color-accent); }
+.cloud-badge--syncing { background: var(--color-announcement-light); color: var(--color-announcement); }
+.cloud-badge--warning { background: var(--color-warning-light); color: var(--color-warning); }
+.cloud-badge--error { background: var(--color-negative-light); color: var(--color-negative); }
 .cloud-badge--neutral { background: var(--surface-2); color: var(--text-secondary); }
 
 .cloud-info-panel {

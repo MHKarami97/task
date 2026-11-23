@@ -1,64 +1,87 @@
 /* ==========================================================================
-   Design Tokens — inspired by Spotify's dark-immersive design language
-   Adapted for RTL Persian task-management PWA
+   Design Tokens — Modern Fluid UI System for RTL Persian Task App
+   Optimized for Dark & Light themes with rich depth and readability
    ========================================================================== */
 :root {
-  /* Brand */
-  --color-accent: #1ed760;
-  --color-accent-border: #1db954;
+  /* Brand Accent */
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-border: #34d399;
+  --color-accent-light: rgba(16, 185, 129, 0.14);
+  --color-accent-glow: rgba(16, 185, 129, 0.32);
+  --color-accent-gradient: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  --color-accent-text: #ffffff;
 
-  /* Dark theme surfaces */
-  --dark-bg: #121212;
-  --dark-surface-1: #181818;
-  --dark-surface-2: #1f1f1f;
-  --dark-card: #252525;
-  --dark-card-alt: #272727;
-  --dark-border: #4d4d4d;
-  --dark-border-light: #7c7c7c;
+  /* Refined Dark Theme Surfaces (Rich Navy/Slate undertone, not pitch black) */
+  --dark-bg: #0f172a;
+  --dark-surface-1: #1e293b;
+  --dark-surface-2: #283548;
+  --dark-surface-3: #334155;
+  --dark-card: #1e293b;
+  --dark-card-hover: #243247;
+  --dark-card-alt: #192233;
+  --dark-border: rgba(255, 255, 255, 0.08);
+  --dark-border-light: rgba(255, 255, 255, 0.15);
+  --dark-border-focus: rgba(16, 185, 129, 0.55);
+  --dark-nav-bg: rgba(23, 32, 48, 0.88);
+  --dark-glass-bg: rgba(30, 41, 59, 0.8);
 
-  /* Dark theme text */
-  --dark-text-base: #ffffff;
-  --dark-text-secondary: #b3b3b3;
-  --dark-text-tertiary: #cbcbcb;
+  /* Dark Theme Text */
+  --dark-text-base: #f8fafc;
+  --dark-text-secondary: #94a3b8;
+  --dark-text-tertiary: #64748b;
 
-  /* Light theme surfaces */
-  --light-bg: #fafafa;
+  /* Refined Light Theme Surfaces */
+  --light-bg: #f8fafc;
   --light-surface-1: #ffffff;
-  --light-surface-2: #f2f2f2;
+  --light-surface-2: #f1f5f9;
+  --light-surface-3: #e2e8f0;
   --light-card: #ffffff;
-  --light-border: #e0e0e0;
+  --light-card-hover: #fcfdfe;
+  --light-card-alt: #f1f5f9;
+  --light-border: rgba(15, 23, 42, 0.08);
+  --light-border-light: rgba(15, 23, 42, 0.14);
+  --light-border-focus: rgba(16, 185, 129, 0.55);
+  --light-nav-bg: rgba(255, 255, 255, 0.88);
+  --light-glass-bg: rgba(255, 255, 255, 0.8);
 
-  /* Light theme text */
-  --light-text-base: #121212;
-  --light-text-secondary: #5e5e5e;
+  /* Light Theme Text */
+  --light-text-base: #0f172a;
+  --light-text-secondary: #64748b;
+  --light-text-tertiary: #94a3b8;
 
-  /* Semantic */
-  --color-negative: #f3727f;
-  --color-warning: #ffa42b;
-  --color-announcement: #539df5;
+  /* Semantic Colors */
+  --color-negative: #f43f5e;
+  --color-negative-light: rgba(244, 63, 94, 0.12);
+  --color-warning: #f59e0b;
+  --color-warning-light: rgba(245, 158, 11, 0.14);
+  --color-announcement: #3b82f6;
+  --color-announcement-light: rgba(59, 130, 246, 0.14);
   --color-success: var(--color-accent);
 
-  /* Priority colors */
-  --priority-high: #f3727f;
-  --priority-medium: #ffa42b;
-  --priority-low: #539df5;
+  /* Priority Colors */
+  --priority-high: #f43f5e;
+  --priority-medium: #f59e0b;
+  --priority-low: #3b82f6;
 
-  /* Elevation shadows */
-  --shadow-medium: rgba(0, 0, 0, 0.3) 0px 8px 8px;
-  --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
-  --shadow-input-inset: rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+  /* Modern Layered Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-medium: 0 4px 14px -1px rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+  --shadow-heavy: 0 14px 32px -4px rgba(0, 0, 0, 0.45), 0 6px 14px -2px rgba(0, 0, 0, 0.25);
+  --shadow-fab: 0 8px 24px -2px rgba(16, 185, 129, 0.45);
 
-  /* Radius scale */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 16px;
+  /* Radius Scale */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-pill: 500px;
   --radius-full: 9999px;
   --radius-circle: 50%;
 
-  /* Spacing scale (base unit 8px) */
+  /* Spacing Scale (base 4px/8px) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -68,33 +91,53 @@
   --space-8: 32px;
 
   /* Typography */
-  --font-family-base: "Vazirmatn", "SpotifyMixUI", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  --font-family-title: "Vazirmatn", "SpotifyMixUITitle", -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-family-base: "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+  --font-family-title: "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
 
   /* Layout */
-  --bottom-nav-height: 64px;
-  --topbar-height: 56px;
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
+  --bottom-nav-height: 68px;
+  --topbar-height: 58px;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Active theme bindings — default: dark */
+  /* Active Theme Bindings — Default Dark */
   --bg: var(--dark-bg);
   --surface-1: var(--dark-surface-1);
   --surface-2: var(--dark-surface-2);
+  --surface-3: var(--dark-surface-3);
   --card: var(--dark-card);
+  --card-hover: var(--dark-card-hover);
+  --card-alt: var(--dark-card-alt);
   --border: var(--dark-border);
+  --border-light: var(--dark-border-light);
+  --border-focus: var(--dark-border-focus);
+  --nav-bg: var(--dark-nav-bg);
+  --glass-bg: var(--dark-glass-bg);
   --text-base: var(--dark-text-base);
   --text-secondary: var(--dark-text-secondary);
+  --text-tertiary: var(--dark-text-tertiary);
 }
 
 [data-theme="light"] {
   --bg: var(--light-bg);
   --surface-1: var(--light-surface-1);
   --surface-2: var(--light-surface-2);
+  --surface-3: var(--light-surface-3);
   --card: var(--light-card);
+  --card-hover: var(--light-card-hover);
+  --card-alt: var(--light-card-alt);
   --border: var(--light-border);
+  --border-light: var(--light-border-light);
+  --border-focus: var(--light-border-focus);
+  --nav-bg: var(--light-nav-bg);
+  --glass-bg: var(--light-glass-bg);
   --text-base: var(--light-text-base);
   --text-secondary: var(--light-text-secondary);
-  --shadow-medium: rgba(0, 0, 0, 0.08) 0px 4px 12px;
-  --shadow-heavy: rgba(0, 0, 0, 0.15) 0px 8px 24px;
+  --text-tertiary: var(--light-text-tertiary);
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-medium: 0 4px 14px -1px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-heavy: 0 14px 34px -4px rgba(15, 23, 42, 0.12), 0 6px 14px -2px rgba(15, 23, 42, 0.06);
+  --shadow-fab: 0 8px 24px -2px rgba(16, 185, 129, 0.35);
 }

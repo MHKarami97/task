@@ -219,12 +219,24 @@ export class AboutView {
       ${cloudCardHTML}
 
       <div class="card about-section">
-        <h3>آمار</h3>
-        <div class="chip-row">
-          <span class="chip active">کل: ${stats.total}</span>
-          <span class="chip">انجام‌شده: ${stats.completed}</span>
-          <span class="chip">در انتظار: ${stats.pending}</span>
-          <span class="chip">عقب‌افتاده: ${stats.overdue}</span>
+        <h3>آمار کارها</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-box__val stat-box__val--accent">${stats.total}</div>
+            <div class="stat-box__label">کل کارها</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box__val">${stats.completed}</div>
+            <div class="stat-box__label">انجام‌شده</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box__val stat-box__val--warning">${stats.pending}</div>
+            <div class="stat-box__label">در انتظار</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box__val stat-box__val--danger">${stats.overdue}</div>
+            <div class="stat-box__label">عقب‌افتاده</div>
+          </div>
         </div>
       </div>
 

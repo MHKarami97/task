@@ -16,8 +16,11 @@ class ThemeManager {
 
   _apply() {
     document.documentElement.setAttribute("data-theme", this.current);
+    if (document.body) {
+      document.body.setAttribute("data-theme", this.current);
+    }
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", this.current === "dark" ? "#121212" : "#fafafa");
+    if (meta) meta.setAttribute("content", this.current === "dark" ? "#0f172a" : "#f8fafc");
   }
 
   toggle() {

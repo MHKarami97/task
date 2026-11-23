@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#121212" />
+<meta name="theme-color" content="#0f172a" />
 <meta name="description" content="یادآور کارها - اپلیکیشن مدیریت وظایف با تقویم شمسی، بدون بک‌اند، قابل نصب" />
 <title>یادآور کارها</title>
 <link rel="manifest" href="./manifest.json" />
 <link rel="icon" href="./assets/icons/favicon.png" />
 <link rel="apple-touch-icon" href="./assets/icons/favicon.png" />
-<link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css" />
+<link rel="stylesheet" href="./assets/fonts/Vazirmatn-font-face.css" />
 <link rel="stylesheet" href="./css/variables.css" />
 <link rel="stylesheet" href="./css/base.css" />
 <link rel="stylesheet" href="./css/layout.css" />
@@ -17,40 +17,84 @@
 <link rel="stylesheet" href="./css/responsive.css" />
 <link rel="stylesheet" href="./css/cloud.css" />
 </head>
-<body data-theme="dark">
+<body>
 <div class="app-shell">
   <header class="mobile-topbar">
-    <span class="mobile-topbar__title">یادآور کارها</span>
-    <button class="theme-toggle" id="theme-toggle-mobile" aria-label="تغییر تم"><span class="theme-toggle__knob"></span></button>
+    <div class="mobile-topbar__brand">
+      <span class="mobile-topbar__logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m9 12 2 2 4-4"/></svg>
+      </span>
+      <span class="mobile-topbar__title">یادآور کارها</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle-mobile" aria-label="تغییر تم" title="تغییر تم">
+      <span class="theme-toggle__icon theme-toggle__icon--sun">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </span>
+      <span class="theme-toggle__icon theme-toggle__icon--moon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </span>
+      <span class="theme-toggle__knob"></span>
+    </button>
   </header>
 
   <main class="main-content" id="view-container"></main>
 
   <nav class="bottom-nav">
     <div class="bottom-nav__items">
-      <button class="bottom-nav__item" data-route="tasks">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M2 12l3.09 6.26L2 22l6.91-1.86L12 22M2 12a10 10 0 1 0 10-10"/></svg>
-        <span>کارها</span>
+      <button class="bottom-nav__item" data-route="tasks" aria-label="کارها">
+        <span class="bottom-nav__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <span class="bottom-nav__label">کارها</span>
       </button>
-      <button class="bottom-nav__item" data-route="calendar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>
-        <span>تقویم</span>
+
+      <button class="bottom-nav__item" data-route="calendar" aria-label="تقویم">
+        <span class="bottom-nav__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+        </span>
+        <span class="bottom-nav__label">تقویم</span>
       </button>
-      <button class="bottom-nav__item fab" id="fab-add">
-        <span class="bottom-nav__fab-circle"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></span>
+
+      <div class="bottom-nav__fab-slot">
+        <button class="bottom-nav__fab" id="fab-add" aria-label="کار جدید" title="افزودن کار جدید">
+          <span class="bottom-nav__fab-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="bottom-nav__fab-text">کار جدید</span>
+        </button>
+      </div>
+
+      <button class="bottom-nav__item" id="fab-add-list" aria-label="لیست جدید">
+        <span class="bottom-nav__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><line x1="18" y1="15" x2="18" y2="21"/><line x1="15" y1="18" x2="21" y2="18"/></svg>
+        </span>
+        <span class="bottom-nav__label">لیست جدید</span>
       </button>
-      <button class="bottom-nav__item" id="fab-add-list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="19" cy="17" r="3"/><path d="M19 16v2M18 17h2"/></svg>
-        <span>لیست جدید</span>
-      </button>
-      <button class="bottom-nav__item" data-route="about">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>درباره ما</span>
+
+      <button class="bottom-nav__item" data-route="about" aria-label="درباره">
+        <span class="bottom-nav__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12.01" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+        </span>
+        <span class="bottom-nav__label">درباره</span>
       </button>
     </div>
+
     <div class="bottom-nav__brand">
-      <button class="theme-toggle" id="theme-toggle-desktop" aria-label="تغییر تم"><span class="theme-toggle__knob"></span></button>
-      <span class="bottom-nav__brand-title">یادآور کارها</span>
+      <div class="bottom-nav__brand-info">
+        <span class="bottom-nav__brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <span class="bottom-nav__brand-title">یادآور کارها</span>
+      </div>
+      <button class="theme-toggle" id="theme-toggle-desktop" aria-label="تغییر تم" title="تغییر تم">
+        <span class="theme-toggle__icon theme-toggle__icon--sun">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </span>
+        <span class="theme-toggle__icon theme-toggle__icon--moon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+        <span class="theme-toggle__knob"></span>
+      </button>
     </div>
   </nav>
 </div>
